@@ -9,7 +9,18 @@ date: 2026-10-30
 
 **Status.** Reported, fixed, and closed as a duplicate. Someone reached it before me. The reasoning is still worth writing down.
 
-**Class.** Business logic. The second add skips the rental-period check and writes a negative line. Severity is medium: it needs an authenticated account. The minus showed up on the cart, and I saw it.
+**Class.** Business logic. The cart update path did not validate the rental period. Severity is medium: it needs an authenticated account, and the checkout behavior was not tested.
+
+---
+
+## A note on how I label things
+
+This was a black-box test. I never saw the source code, so every statement is one of two kinds.
+
+- **Observed.** Taken from a request or a response.
+- **Hypothesis.** My inference about the backend. I mark these so you can weigh them.
+
+Where I could not confirm something, I say so in **What I didn't verify**.
 
 ---
 
@@ -17,19 +28,19 @@ date: 2026-10-30
 
 The target is an e-commerce platform with a rental feature. You pick an item, choose a start and an end date, and the backend prices the line by its duration.
 
-The first add rejects an end date that comes before the start. The create path checks the period. The second add of the same product returns `cartUpdateResult: UPDATED`. That update path accepted the reversed range and priced the line negative. One poisoned line pulled the rental cart to **−€477,673.13**.
+Adding a rental with an end date before its start date is rejected the first time. The create path validates the period. Adding the same product a second time returns `cartUpdateResult: UPDATED`. That update path accepted a reversed range and priced the line negative. One poisoned line pulled the rental total to **−€477,673.13**.
 
-That minus was on the cart. I saw it.
+My core hypothesis: the create path and the update path do not share the same validation. The first write is guarded. The second write is not.
 
-The create path and the update path do not share the same check. The first write is guarded. The second write is not.
+I stopped at the cart. I never attempted checkout with a negative or zero total, so everything about payment below is reasoning, not a test.
 
 ---
 
 ## Scope and ground rules
 
 - The target and the program are redacted. I am not naming the company.
-- Black-box. I did not have the source. The requests and the cart are the evidence.
-- I tested with my own account. The minus showed up on that cart.
+- Black-box only. Backend claims are inferences, labeled as above.
+- I tested with my own account and stopped at the cart.
 - The figures omit request headers. Two original captures were the same file, so one of them is used.
 
 ---
@@ -103,9 +114,9 @@ That is the right design, and it also means the pricing function is the single p
 
 *They are simply outside the window.*
 
-This refusal is the window check, not the reversed-range bug. It shows the create path can say no.
+This is not a reversed range. What it proves is narrower, and still important.
 
-The server refuses a period that ends in 2031. The important part: the create path inspects the rental period and refuses it with `RENTAL_PERIOD_INVALID` before the line is created.
+The valid window tops out somewhere around 2031, roughly five years out. More important for the rest of the story: real validation exists on the create path. A code path inspects the rental period and refuses it with `RENTAL_PERIOD_INVALID` before the line is created.
 
 Hold that thought. The bug is a second path that does not run this same check.
 
@@ -113,9 +124,11 @@ Hold that thought. The bug is a second path that does not run this same check.
 
 ## 3. How strict is the date validation?
 
-**How I got here.** I sent the add-to-cart request ranges the form would not normally produce.
+**How I got here.** I started feeding the add-to-cart request reversed and malformed ranges.
 
-The create path enforces the window. A correctly ordered range that ends too far in the future is rejected with `RENTAL_PERIOD_INVALID` and `NOT_UPDATED`. The period check runs on create. The bug is the second write, which does not run that check.
+- **Observed.** The create path enforces an out-of-window check. A correctly ordered but too-far-future range is rejected with `RENTAL_PERIOD_INVALID` and `NOT_UPDATED`. A period-validation path exists on create.
+- **What I did not capture cleanly.** A reversed range, end before start, rejected on a fresh add in isolation. I am confident the create path guards the period. The out-of-window rejection proves a check runs. My clean evidence is for the out-of-window case, not specifically for a reversed range on create.
+- **Hypothesis, not fully confirmed.** The validator may compare only the date and ignore the time, so a same-day range with the end time before the start time could slip through as a negative hour. Nothing later depends on that. The finding is the second write, not a one-hour trick.
 
 ---
 
@@ -143,7 +156,7 @@ One action, "add this item," resolves to two server behaviors.
 - **First add, create path.** The line does not exist yet. The server creates it, runs the period validation from section 2, and prices it. The price is positive.
 - **Second add, update path.** The line already exists, keyed by product. The server updates it with the new dates. This is where the reversed range got through and the line price went negative.
 
-The update path reads the new start and end and does not run the period check the create path runs. Create rejects a bad period. The second add comes back `UPDATED`. The cart then holds a negative line.
+**Hypothesis.** The update path re-reads the start and end dates and does not re-run the period validation that the create path runs, or it runs a weaker version. The evidence lines up: validation exists on create, the re-add is explicitly `UPDATED`, and the cart ends up holding a negative line.
 
 The second add used a range reversed by about a year, so the duration goes strongly negative:
 
@@ -163,7 +176,7 @@ The takeaway: two code paths for one action, and only one of them is guarded. Wo
 
 ## 5. Why the price goes negative
 
-The reversed range reaches a pricing function that never checks the sign. This shape produces the negative line I saw:
+**Hypothesis. Illustrative only, not reconstructed from code.** A pricing function shaped like this would reproduce what I saw:
 
 ```text Pricing
 function price(item, start, end):
@@ -173,9 +186,11 @@ function price(item, start, end):
     return ceil(hours / 24) * item.dailyRate
 ```
 
-`hours` is negative. Any negative value is less than 24, so the function takes the hourly branch and returns a negative line price. There is no `hours > 0` guard. Create had already rejected a bad duration. Update did not, so the formula stored a negative price and the cart showed it.
+With a reversed range, `hours` is negative. Any negative value is less than 24, so it falls into the hourly branch and the result is a negative line price. There is no `hours > 0` guard. The hypothesis is that the developer assumed validation had already guaranteed a positive duration. On the create path, it had. On the update path, it had not.
 
-The second add sent `quantity: 100`. The cart stored a line of −€434,880.00 and a rental total of −€477,673.13. Validation and pricing were two separate checks, and the update path skipped the first one.
+**Open question.** I cannot fully reconcile the magnitude with the baseline. The second add carried `quantity: 100`, so part of the huge number is the line price multiplied across 100 units. Even accounting for that, a normal rental priced at about €20 and a reversed line at −€434,880 do not sit cleanly on the same per-day rate. The exact formula, and the exact reversed span, stays unconfirmed. The sign and the direction are solid. The precise arithmetic is still open.
+
+The lesson survives either way. Validation and pricing were two separate trust zones, and the update path let me skip the first one.
 
 ---
 
@@ -194,13 +209,38 @@ The second add sent `quantity: 100`. The cart stored a line of −€434,880.00 
 | Cart `totalDamageWaiverPrice` | −€43,424.83 |
 | Cart `totalRentalPrice` | −€477,673.13 |
 
-The poisoned line is −€434,880.00. The cart rent subtotal is −€434,248.30. The difference is €631.70 of positive rental lines, and the negative line swallows them. The cart total is that subtotal plus the 10% damage waiver.
+The rent subtotal of −€434,248.30 implies a positive line of about +€631.70 being swallowed by the negative one. The total is that subtotal plus the 10% damage waiver.
 
 ![The cart total after the reversed rental](negative-cart-totals/negative-total.png)
 
-*The cart after the reversed rental. The minus is on the cart.*
+*The response itself. These numbers are server-side state.*
 
-The minus showed up on the cart. I saw **−€477,673.13** there. The cart response carries the same numbers, so the cart is showing stored server state, not a display glitch.
+The API response holds the negative values, so this is not a front-end rendering glitch.
+
+**Not verified.** Whether these rental totals are ever combined with regular, non-rental items into a single grand total. The response keeps `entries` and `rentalEntries` separate.
+
+---
+
+## 7. The payment layer
+
+**Not tested.** I stopped at the cart. This section is reasoning about how payment processors generally behave, not something I confirmed against this target.
+
+- A processor validates what it is sent. The amount has to be positive and above a minimum. It has no concept of what the cart should cost.
+- If the backend submits one positive total, for example a €100 item offset by a −€80 line and charged as €20, the processor charges it. The number it received looks fine.
+- If the total is negative, the processor almost certainly rejects the amount. That protects the processor, not the merchant's inventory or books.
+- The dangerous edge is a total of exactly 0. Many stores have a path for free orders, and a negative line can land the total there.
+
+The processor is a calculator you hand a number to. The number has to be correct before it arrives. I left the provider unnamed because I did not verify it.
+
+---
+
+## What I didn't verify
+
+- Whether the negative rental total is ever combined with non-rental items into one grand total.
+- What checkout and the payment step actually do with a zero or negative total.
+- Whether a same-day reversed range is accepted on the create path.
+- The real pricing formula, and the exact reversed span and quantity behind the −€434,880 line.
+- A clean side-by-side capture of the create response and the update response for the same reversed range.
 
 ---
 
@@ -225,19 +265,20 @@ POST /api/rental
 
 ---
 
-## Root cause
+## Root cause, my best reading
 
-1. No shared `end > start` check on the update path. The check lives on create. The second add skips it.
-2. The pricing function has no check for a negative duration or a negative result.
-3. The cart accepts the negative line and shows the negative total.
+1. No shared `end > start` check on the update path. Validation lives on create. This is the primary, well-supported point.
+2. A pricing function with no check for a negative duration or a negative result.
+3. The cart tolerates a line priced at zero or below.
+4. Unconfirmed: the validator may look at the day and ignore the time. That is a lead, not a finding.
 
 ---
 
 ## Impact
 
-- One reversed second add writes a negative rental line, and the cart total goes to **−€477,673.13**. I saw that minus on the cart.
-- The negative line offsets the positive rental lines already in the cart.
-- The store's cart total is no longer the price of the goods.
+- Offset legitimately priced items with negative rental lines, and pay less than the value.
+- Possibly steer a cart to a zero total that skips payment, depending on checkout. Not tested.
+- Inventory and revenue loss, plus messy refund and accounting side effects.
 
 ---
 
@@ -254,8 +295,8 @@ POST /api/rental
 
 ## Takeaways
 
-- Hunt the second write. Create, update, and merge are separate paths, and the check sits on one of them. If the first add is clean, add again.
-- Probe the edges. The booking window and the price are different code.
+- Hunt the second write. Create, update, and merge are often separate paths, and only one of them gets the validation. If the first add is clean, add again.
+- Probe the edges. Booking-window limits are usually enforced by different code than the pricing.
 - "The server computes the price" is not the end of the story. Ask what inputs the formula was never tested with.
 - The payment processor is not the business logic. It only sees the number it is given.
 
