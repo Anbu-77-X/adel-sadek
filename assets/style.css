@@ -322,3 +322,40 @@ article img + p {
     padding: 0;
   }
 }
+
+/* Arabic (right-to-left) pages */
+html[dir="rtl"] body {
+  font-family: "Noto Naskh Arabic", "Geeza Pro", "Segoe UI", Tahoma, serif;
+}
+
+[dir="rtl"] .post-title,
+[dir="rtl"] article h2,
+[dir="rtl"] article h3,
+[dir="rtl"] article h4 {
+  letter-spacing: 0;
+}
+
+[dir="rtl"] article ul,
+[dir="rtl"] article ol {
+  padding-left: 0;
+  padding-right: 1.25rem;
+}
+
+[dir="rtl"] article blockquote {
+  padding: 0.05rem 1rem 0.05rem 0;
+  border-left: 0;
+  border-right: 3px solid var(--pine);
+}
+
+[dir="rtl"] article th,
+[dir="rtl"] article td {
+  text-align: right;
+}
+
+[dir="rtl"] article pre {
+  text-align: left;
+}
+
+[dir="rtl"] article bdi {
+  white-space: nowrap;
+}

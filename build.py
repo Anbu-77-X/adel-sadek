@@ -518,8 +518,11 @@ def render_post(post: Post, planned: list[tuple[Path, Path]]) -> str:
         article = render_blocks(post.body, image_handler(post.slug, planned))
     except BuildError as exc:
         raise BuildError(f"{post.source.name}: {exc}") from exc
+    home = f'<a href="../../index.html">{html.escape(AUTHOR)}</a>'
+    if (WRITEUPS / post.slug / "ar.html").is_file():
+        home += ' · <a href="ar.html" hreflang="ar" lang="ar" dir="rtl">عربي</a>'
     body = (
-        f'    <p class="home"><a href="../../index.html">{html.escape(AUTHOR)}</a></p>\n'
+        f'    <p class="home">{home}</p>\n'
         f'    <h1 class="post-title" dir="auto">{html.escape(post.title)}</h1>\n'
         f'    <p class="when"><time datetime="{html.escape(post.date)}">{html.escape(post.date)}</time></p>\n'
         f'    <article dir="auto">\n{article}\n    </article>'
@@ -607,6 +610,16 @@ def build_site() -> int:
     audit_html(missing_html, 0)
     for page_html in pages.values():
         audit_html(page_html, 2)
+    arabic: dict[str, str] = {}
+    for post in posts:
+        source = WRITEUPS / post.slug / "ar.html"
+        if source.is_file() and not source.is_symlink():
+            ar_html = source.read_text(encoding="utf-8")
+            try:
+                audit_html(ar_html, 2)
+            except BuildError as exc:
+                raise BuildError(f"{post.slug}/ar.html: {exc}") from exc
+            arabic[post.slug] = ar_html
     reset_posts()
     for src, dest in planned:
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -615,6 +628,8 @@ def build_site() -> int:
         dest = POSTS / slug / "index.html"
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(page_html, encoding="utf-8")
+    for slug, ar_html in arabic.items():
+        (POSTS / slug / "ar.html").write_text(ar_html, encoding="utf-8")
     (ROOT / "index.html").write_text(index_html, encoding="utf-8")
     (ROOT / "404.html").write_text(missing_html, encoding="utf-8")
     (ROOT / ".nojekyll").write_text("", encoding="utf-8")
