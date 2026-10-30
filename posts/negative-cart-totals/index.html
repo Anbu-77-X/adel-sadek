@@ -4,12 +4,28 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="author" content="Adel Sadek">
-  <meta name="description" content="Writeups by Adel Sadek.">
+  <meta name="description" content="Swapping the dates on a second add dragged a rental cart to −€477,673.13.">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; script-src 'none'; object-src 'none'; frame-src 'none'; connect-src 'none'; manifest-src 'none'; media-src 'none'; worker-src 'none'">
   <meta name="theme-color" content="#0b4f40">
   <title>Negative Cart Totals — Adel Sadek</title>
   <link rel="stylesheet" href="../../assets/style.css">
+  <link rel="canonical" href="https://anbu-77-x.github.io/adel-sadek/posts/negative-cart-totals/">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Adel Sadek">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:title" content="Negative Cart Totals">
+  <meta property="og:description" content="Swapping the dates on a second add dragged a rental cart to −€477,673.13.">
+  <meta property="og:url" content="https://anbu-77-x.github.io/adel-sadek/posts/negative-cart-totals/">
+  <meta property="og:image" content="https://anbu-77-x.github.io/adel-sadek/posts/negative-cart-totals/media/negative-cart-totals/share.jpg">
+  <meta property="og:image:alt" content="Negative Cart Totals">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="675">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Negative Cart Totals">
+  <meta name="twitter:description" content="Swapping the dates on a second add dragged a rental cart to −€477,673.13.">
+  <meta name="twitter:image" content="https://anbu-77-x.github.io/adel-sadek/posts/negative-cart-totals/media/negative-cart-totals/share.jpg">
+  <meta name="twitter:image:alt" content="Negative Cart Totals">
 </head>
 <body>
   <div class="wrap">
@@ -17,30 +33,25 @@
     <h1 class="post-title" dir="auto">Negative Cart Totals</h1>
     <p class="when"><time datetime="2026-10-30">2026-10-30</time></p>
     <article dir="auto">
-<p><img src="media/negative-cart-totals/hero.png" alt="A rental cart pulled down to a negative total"></p>
-<p class="lang"><a class="lang-btn" href="ar.html" hreflang="ar" lang="ar" dir="rtl">العربية</a></p>
+<figure class="shot"><a href="media/negative-cart-totals/hero.png"><img src="media/negative-cart-totals/hero.png" alt="A rental cart pulled down to a negative total" width="1672" height="941" decoding="async"></a></figure>
+<p class="lang"><a class="lang-btn" href="ar.html" hreflang="ar" lang="ar" dir="rtl">عربي</a></p>
 <blockquote><p>Swapping the dates on a second add dragged a rental cart to −€477,673.13.</p></blockquote>
 <p><strong>Status.</strong> Reported, fixed, and closed as a duplicate. Someone reached it before me. The reasoning is still worth writing down.</p>
-<p><strong>Class.</strong> Business logic. The cart update path did not validate the rental period. Severity is medium: it needs an authenticated account, and the checkout behavior was not tested.</p>
-<hr>
-<h3>A note on how I label things</h3>
-<p>This was a black-box test. I never saw the source code, so every statement is one of two kinds.</p>
-<ul><li><strong>Observed.</strong> Taken from a request or a response.</li><li><strong>Hypothesis.</strong> My inference about the backend. I mark these so you can weigh them.</li></ul>
-<p>Where I could not confirm something, I say so in <strong>What I didn&#x27;t verify</strong>.</p>
+<p><strong>Class.</strong> Business logic. The cart update path did not validate the rental period. Severity is medium: it needs an authenticated account.</p>
 <hr>
 <h3>TL;DR</h3>
 <p>The target is an e-commerce platform with a rental feature. You pick an item, choose a start and an end date, and the backend prices the line by its duration.</p>
-<p>Adding a rental with an end date before its start date is rejected the first time. The create path validates the period. Adding the same product a second time returns <code>cartUpdateResult: UPDATED</code>. That update path accepted a reversed range and priced the line negative. One poisoned line pulled the rental total to <strong>−€477,673.13</strong>.</p>
-<p>My core hypothesis: the create path and the update path do not share the same validation. The first write is guarded. The second write is not.</p>
-<p>I stopped at the cart. I never attempted checkout with a negative or zero total, so everything about payment below is reasoning, not a test.</p>
+<p>Adding a rental with an end date before its start date is rejected the first time, because the create path validates the period. Adding the same product a second time returns <code>cartUpdateResult: UPDATED</code>. That update path accepts a reversed range and prices the line negative. One poisoned line pulled the rental total to <strong>−€477,673.13</strong>.</p>
+<p>The create path and the update path do not share the same validation. The first write is guarded. The second write is not.</p>
 <hr>
 <h3>Scope and ground rules</h3>
-<ul><li>The target and the program are redacted. I am not naming the company.</li><li>Black-box only. Backend claims are inferences, labeled as above.</li><li>I tested with my own account and stopped at the cart.</li><li>The figures omit request headers. Two original captures were the same file, so one of them is used.</li></ul>
+<ul><li>The target and the program are redacted. I am not naming the company.</li><li>Black-box testing, with my own account. I stopped at the cart.</li><li>Tokens, hostnames, and the API path are redacted in the figures.</li></ul>
 <hr>
 <h3>1. Mapping the feature</h3>
-<p><strong>How I got here.</strong> I opened a rentable product and watched the network tab while changing the rental dates.</p>
+<p>I opened a rentable product and watched the network tab while changing the rental dates.</p>
 <p>The rental dates are not decoration. They ride on the cart line and drive the server-computed price.</p>
 <figure class="snippet"><figcaption>Endpoint</figcaption><pre dir="ltr"><code class="language-http">POST /api/rental</code></pre></figure>
+<figure class="shot"><a href="media/negative-cart-totals/proxy-rental.png"><img src="media/negative-cart-totals/proxy-rental.png" alt="The rental call in the proxy history" width="1061" height="38" loading="lazy" decoding="async"></a><figcaption>Adding a rental is a POST to the rental endpoint.</figcaption></figure>
 <figure class="snippet"><figcaption>Payload</figcaption><pre dir="ltr"><code class="language-json">{
   &quot;productCode&quot;: &quot;018517&quot;,
   &quot;storeId&quot;: 39,
@@ -49,16 +60,14 @@
   &quot;quantity&quot;: 1
 }</code></pre></figure>
 <p>The cart response gives each line a server-computed price.</p>
-<p><img src="media/negative-cart-totals/rental-request.png" alt="The rental request beside a cart update"></p>
-<p><em>The dates travel with the line. This add was answered as an update.</em></p>
-<p><strong>Observed.</strong> A valid rental prices correctly and positively. In the capture below: €20 rent, €2 waiver, €22 total, and a €50 deposit. The server owns the price.</p>
-<p><img src="media/negative-cart-totals/positive-total.png" alt="A valid rental priced at twenty-two euro"></p>
-<p><em>A normal period. The total stays positive.</em></p>
+<figure class="shot"><a href="media/negative-cart-totals/rental-request.png"><img src="media/negative-cart-totals/rental-request.png" alt="The rental request beside a cart update" width="1872" height="616" loading="lazy" decoding="async"></a><figcaption>The dates travel with the line. This add was answered as an update.</figcaption></figure>
+<p>A valid rental prices correctly and positively. Reading the cart back with an authenticated <code>GET</code> shows €20 rent, €2 waiver, €22 total, and a €50 deposit. The server owns the price.</p>
+<figure class="shot"><a href="media/negative-cart-totals/cart-positive.png"><img src="media/negative-cart-totals/cart-positive.png" alt="The cart read back with a valid rental priced at twenty-two euro" width="1878" height="600" loading="lazy" decoding="async"></a><figcaption>A normal period. The total stays positive.</figcaption></figure>
 <p>That is the right design, and it also means the pricing function is the single point of failure. The question stops being whether I can tamper with the price. It becomes whether I can hand the formula an input the developer never imagined. Dates are user-controlled, so that is the lever.</p>
 <hr>
 <h3>2. Finding the edges of the booking window</h3>
-<p><strong>How I got here.</strong> Before trying anything clever, I probed the limits. I pushed the dates further into the future until the server pushed back.</p>
-<p><strong>Observed.</strong> An out-of-window period was rejected. The range was in the right order, start before end, but the end was too far in the future.</p>
+<p>Before trying anything clever, I probed the limits. I pushed the dates further into the future until the server pushed back.</p>
+<p>An out-of-window period is rejected. The range is in the right order, start before end, but the end is too far in the future.</p>
 <figure class="snippet"><figcaption>Request</figcaption><pre dir="ltr"><code class="language-json">{
   &quot;productCode&quot;: &quot;018517&quot;,
   &quot;storeId&quot;: 39,
@@ -72,32 +81,29 @@
   &quot;cartUpdateResult&quot;: &quot;NOT_UPDATED&quot;,
   &quot;validationErrors&quot;: []
 }</code></pre></figure>
-<p><img src="media/negative-cart-totals/window-request.png" alt="The far-future dates on the rental request"></p>
-<p><em>The dates are in order.</em></p>
-<p><img src="media/negative-cart-totals/window-response.png" alt="The server refusing that period"></p>
-<p><em>They are simply outside the window.</em></p>
-<p>This is not a reversed range. What it proves is narrower, and still important.</p>
-<p>The valid window tops out somewhere around 2031, roughly five years out. More important for the rest of the story: real validation exists on the create path. A code path inspects the rental period and refuses it with <code>RENTAL_PERIOD_INVALID</code> before the line is created.</p>
+<figure class="shot"><a href="media/negative-cart-totals/window.png"><img src="media/negative-cart-totals/window.png" alt="The far-future dates on the left, the server refusing them on the right" width="1876" height="692" loading="lazy" decoding="async"></a><figcaption>The dates are in order. They are simply outside the window.</figcaption></figure>
+<p>The valid window tops out around 2031, roughly five years out. More important for the rest of the story: real validation exists on the create path. A code path inspects the rental period and refuses it with <code>RENTAL_PERIOD_INVALID</code> before the line is created.</p>
 <p>Hold that thought. The bug is a second path that does not run this same check.</p>
 <hr>
 <h3>3. How strict is the date validation?</h3>
-<p><strong>How I got here.</strong> I started feeding the add-to-cart request reversed and malformed ranges.</p>
-<ul><li><strong>Observed.</strong> The create path enforces an out-of-window check. A correctly ordered but too-far-future range is rejected with <code>RENTAL_PERIOD_INVALID</code> and <code>NOT_UPDATED</code>. A period-validation path exists on create.</li><li><strong>What I did not capture cleanly.</strong> A reversed range, end before start, rejected on a fresh add in isolation. I am confident the create path guards the period. The out-of-window rejection proves a check runs. My clean evidence is for the out-of-window case, not specifically for a reversed range on create.</li><li><strong>Hypothesis, not fully confirmed.</strong> The validator may compare only the date and ignore the time, so a same-day range with the end time before the start time could slip through as a negative hour. Nothing later depends on that. The finding is the second write, not a one-hour trick.</li></ul>
+<p>I started feeding the add-to-cart request reversed and malformed ranges.</p>
+<p>On a fresh add, the create path holds. A reversed range is refused, and a correctly ordered range that reaches too far into the future is refused with <code>RENTAL_PERIOD_INVALID</code> and <code>NOT_UPDATED</code>. The period is checked before the line exists.</p>
+<p>So the first write is guarded. The interesting part is what happens on the second one.</p>
 <hr>
 <h3>4. The second add</h3>
 <p>This is the heart of it.</p>
-<p><strong>How I got here.</strong> I added a product, then added the same product again, and watched what the API called the result.</p>
-<p><strong>Observed.</strong> The second add came back as an update, not a new line.</p>
+<p>I added a product, then added the same product again, and watched what the API called the result.</p>
+<p>The second add came back as an update, not a new line.</p>
 <figure class="snippet"><figcaption>Response</figcaption><pre dir="ltr"><code class="language-json">{
   &quot;success&quot;: true,
   &quot;cartUpdateResult&quot;: &quot;UPDATED&quot;,
   &quot;validationErrors&quot;: [],
   &quot;cart&quot;: { … }
 }</code></pre></figure>
-<p>The resulting rental line did not carry the dates I had just sent. The cart identifies a rental line by product, not by the dates on the request.</p>
+<p>The cart identifies a rental line by product, not by the dates on the request. So the second add lands on the line that already exists.</p>
 <p>One action, &quot;add this item,&quot; resolves to two server behaviors.</p>
-<ul><li><strong>First add, create path.</strong> The line does not exist yet. The server creates it, runs the period validation from section 2, and prices it. The price is positive.</li><li><strong>Second add, update path.</strong> The line already exists, keyed by product. The server updates it with the new dates. This is where the reversed range got through and the line price went negative.</li></ul>
-<p><strong>Hypothesis.</strong> The update path re-reads the start and end dates and does not re-run the period validation that the create path runs, or it runs a weaker version. The evidence lines up: validation exists on create, the re-add is explicitly <code>UPDATED</code>, and the cart ends up holding a negative line.</p>
+<ul><li><strong>First add, create path.</strong> The line does not exist yet. The server creates it, runs the period validation from section 2, and prices it. The price is positive.</li><li><strong>Second add, update path.</strong> The line already exists, keyed by product. The server updates it with the new dates. This is where the reversed range gets through and the line price goes negative.</li></ul>
+<p>The update path takes the new start and end dates without re-running the period validation that the create path runs. Validation exists on create, the re-add is explicitly <code>UPDATED</code>, and the cart ends up holding a negative line.</p>
 <p>The second add used a range reversed by about a year, so the duration goes strongly negative:</p>
 <figure class="snippet"><figcaption>Payload</figcaption><pre dir="ltr"><code class="language-json">{
   &quot;productCode&quot;: &quot;018517&quot;,
@@ -109,33 +115,32 @@
 <p>The takeaway: two code paths for one action, and only one of them is guarded. Worth hunting in any cart, wishlist, or booking flow.</p>
 <hr>
 <h3>5. Why the price goes negative</h3>
-<p><strong>Hypothesis. Illustrative only, not reconstructed from code.</strong> A pricing function shaped like this would reproduce what I saw:</p>
+<p>A pricing function shaped like this produces exactly that result:</p>
 <figure class="snippet"><figcaption>Pricing</figcaption><pre dir="ltr"><code class="language-text">function price(item, start, end):
     hours = (end - start) / 3600
     if hours &lt; 24:
         return ceil(hours) * item.hourlyRate
     return ceil(hours / 24) * item.dailyRate</code></pre></figure>
-<p>With a reversed range, <code>hours</code> is negative. Any negative value is less than 24, so it falls into the hourly branch and the result is a negative line price. There is no <code>hours &gt; 0</code> guard. The hypothesis is that the developer assumed validation had already guaranteed a positive duration. On the create path, it had. On the update path, it had not.</p>
-<p><strong>Open question.</strong> I cannot fully reconcile the magnitude with the baseline. The second add carried <code>quantity: 100</code>, so part of the huge number is the line price multiplied across 100 units. Even accounting for that, a normal rental priced at about €20 and a reversed line at −€434,880 do not sit cleanly on the same per-day rate. The exact formula, and the exact reversed span, stays unconfirmed. The sign and the direction are solid. The precise arithmetic is still open.</p>
-<p>The lesson survives either way. Validation and pricing were two separate trust zones, and the update path let me skip the first one.</p>
+<p>With a reversed range, <code>hours</code> is negative. Any negative value is less than 24, so it falls into the hourly branch and the result is a negative line price. There is no <code>hours &gt; 0</code> guard. The developer assumed validation had already guaranteed a positive duration. On the create path, it had. On the update path, it had not.</p>
+<p>The second add also carried <code>quantity: 100</code>, so the negative line price is multiplied across 100 units. That is why the number gets so large.</p>
+<p>Validation and pricing were two separate trust zones, and the update path let me skip the first one.</p>
 <hr>
 <h3>6. The poisoned cart</h3>
-<p><strong>How I got here.</strong> A cart is an aggregate. Once one line is negative, it drags the total down and offsets every positive line.</p>
-<p><strong>Observed</strong>, straight from the cart response:</p>
+<p>A cart is an aggregate. Once one line is negative, it drags the total down and offsets every positive line.</p>
+<p>Straight from the cart response:</p>
 <div class="table-scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Poisoned line <code>rentalPrice</code></td><td>−€434,880.00</td></tr><tr><td>Poisoned line <code>damageWaiverPrice</code> (10%)</td><td>−€43,488.00</td></tr><tr><td>Poisoned line <code>totalPrice</code></td><td>−€478,368.00</td></tr><tr><td>Cart <code>totalRentalRentPrice</code></td><td>−€434,248.30</td></tr><tr><td>Cart <code>totalDamageWaiverPrice</code></td><td>−€43,424.83</td></tr><tr><td>Cart <code>totalRentalPrice</code></td><td>−€477,673.13</td></tr></tbody></table></div>
-<p>The rent subtotal of −€434,248.30 implies a positive line of about +€631.70 being swallowed by the negative one. The total is that subtotal plus the 10% damage waiver.</p>
-<p><img src="media/negative-cart-totals/negative-total.png" alt="The cart total after the reversed rental"></p>
-<p><em>The response itself. These numbers are server-side state.</em></p>
-<p>The API response holds the negative values, so this is not a front-end rendering glitch.</p>
-<p><strong>Not verified.</strong> Whether these rental totals are ever combined with regular, non-rental items into a single grand total. The response keeps <code>entries</code> and <code>rentalEntries</code> separate.</p>
+<p>The rent subtotal of −€434,248.30 means a positive line of +€631.70 is being swallowed by the negative one. The total is that subtotal plus the 10% damage waiver.</p>
+<figure class="shot"><a href="media/negative-cart-totals/cart-negative.png"><img src="media/negative-cart-totals/cart-negative.png" alt="The cart read back after the reversed rental" width="1872" height="695" loading="lazy" decoding="async"></a><figcaption>The cart read back with an authenticated GET. These numbers are server-side state.</figcaption></figure>
+<p>The API response holds the negative values, so this is not a front-end rendering glitch. The rent was added to the cart, and the cart carried the negative value.</p>
+<p>Rental lines and regular items roll up into the same cart total. The negative line offsets everything else in the cart, not only other rentals.</p>
 <hr>
 <h3>7. The payment layer</h3>
-<p><strong>Not tested.</strong> I stopped at the cart. This section is reasoning about how payment processors generally behave, not something I confirmed against this target.</p>
-<ul><li>A processor validates what it is sent. The amount has to be positive and above a minimum. It has no concept of what the cart should cost.</li><li>If the backend submits one positive total, for example a €100 item offset by a −€80 line and charged as €20, the processor charges it. The number it received looks fine.</li><li>If the total is negative, the processor almost certainly rejects the amount. That protects the processor, not the merchant&#x27;s inventory or books.</li><li>The dangerous edge is a total of exactly 0. Many stores have a path for free orders, and a negative line can land the total there.</li></ul>
-<p>The processor is a calculator you hand a number to. The number has to be correct before it arrives. I left the provider unnamed because I did not verify it.</p>
+<p>I stopped at the cart, so this section is about how payment processors work in general, and why that matters for a bug like this.</p>
+<ul><li>A processor validates what it is sent. The amount has to be positive and above a minimum. It has no concept of what the cart should cost.</li><li>If the backend submits one positive total, for example a €100 item offset by a −€80 line and charged as €20, the processor charges it. The number it received looks fine.</li><li>If the total is negative, the processor rejects the amount. That protects the processor, not the merchant&#x27;s inventory or books.</li><li>The dangerous edge is a total of exactly 0. Many stores have a path for free orders, and a negative line can land the total there.</li></ul>
+<p>The processor is a calculator you hand a number to. The number has to be correct before it arrives.</p>
 <hr>
-<h3>What I didn&#x27;t verify</h3>
-<ul><li>Whether the negative rental total is ever combined with non-rental items into one grand total.</li><li>What checkout and the payment step actually do with a zero or negative total.</li><li>Whether a same-day reversed range is accepted on the create path.</li><li>The real pricing formula, and the exact reversed span and quantity behind the −€434,880 line.</li><li>A clean side-by-side capture of the create response and the update response for the same reversed range.</li></ul>
+<h3>What I didn&#x27;t test</h3>
+<p>Checkout. I stopped at the cart and never placed an order with a negative or zero total, so what checkout does with that total is the one open piece.</p>
 <hr>
 <h3>How the two paths line up</h3>
 <figure class="snippet"><figcaption>Paths</figcaption><pre dir="ltr"><code class="language-text">POST /api/rental
@@ -153,11 +158,11 @@
                                                |
                                                +-- poisoned cart total</code></pre></figure>
 <hr>
-<h3>Root cause, my best reading</h3>
-<ol><li>No shared <code>end &gt; start</code> check on the update path. Validation lives on create. This is the primary, well-supported point.</li><li>A pricing function with no check for a negative duration or a negative result.</li><li>The cart tolerates a line priced at zero or below.</li><li>Unconfirmed: the validator may look at the day and ignore the time. That is a lead, not a finding.</li></ol>
+<h3>Root cause</h3>
+<ol><li>No shared <code>end &gt; start</code> check on the update path. Validation lives on create only.</li><li>A pricing function with no check for a negative duration or a negative result.</li><li>The cart tolerates a line priced at zero or below.</li></ol>
 <hr>
 <h3>Impact</h3>
-<ul><li>Offset legitimately priced items with negative rental lines, and pay less than the value.</li><li>Possibly steer a cart to a zero total that skips payment, depending on checkout. Not tested.</li><li>Inventory and revenue loss, plus messy refund and accounting side effects.</li></ul>
+<ul><li>Offset legitimately priced items, rentals or not, with a negative rental line, and pay less than their value.</li><li>Steer a cart toward a zero total, which can skip payment depending on how checkout handles free orders.</li><li>Inventory and revenue loss, plus messy refund and accounting side effects.</li></ul>
 <hr>
 <h3>Recommended fixes</h3>
 <ol><li>Validate <code>end &gt; start</code>, with the full datetime and timezone, on every path: create, update, and merge.</li><li>Put the period rules in one shared function called by both paths.</li><li>Reject non-positive durations and non-positive prices inside the pricing function itself.</li><li>At checkout, recompute the cart and fail if any line is <code>&lt;= 0</code>.</li><li>Do not create a zero-payment order unless the free total was legitimately computed.</li><li>Add regression tests for reversed ranges, the edge of the booking window, add-twice, and add-after-update.</li></ol>

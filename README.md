@@ -21,6 +21,17 @@ A file whose name starts with `_` stays off the list. Unfinished pieces go in `w
 
 Pictures in a writeup must be png, jpg, gif, or webp, stored inside `writeups/`, and linked by a relative path.
 
+## Link previews
+
+When a writeup link is shared on WhatsApp, X, Facebook, LinkedIn, or Telegram, the preview shows a picture, the title, and a short line.
+
+- **Picture.** Put `share.jpg` in the writeup's folder, for example `writeups/negative-cart-totals/share.jpg`. Use about 1200×630 and keep it under 300 KB so WhatsApp shows it.
+- **Short line.** Add `description:` to the title block. Without it, the first `>` quote in the writeup is used.
+
+The Arabic page `ar.html` is written by hand, so copy its preview tags from the English page when you add a new one.
+
+Apps keep old previews for a while. After changing a picture, refresh it with Facebook's Sharing Debugger, or share the link with `?v=2` at the end.
+
 ## GitHub Pages
 
 Create a public repository and push this folder. In the repository, open Settings, then Pages. Deploy from the branch you push, folder `/` (root).

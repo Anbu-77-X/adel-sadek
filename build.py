@@ -17,6 +17,9 @@ ROOT = Path(__file__).resolve().parent
 WRITEUPS = ROOT / "writeups"
 POSTS = ROOT / "posts"
 AUTHOR = "Adel Sadek"
+# Where GitHub Pages serves the site. A domain in domain.txt or CNAME takes over.
+PAGES_URL = "https://anbu-77-x.github.io/adel-sadek/"
+SHARE_NAMES = ("share.jpg", "share.jpeg", "share.png", "share.webp")
 
 HELP = """Usage:
   python3 build.py                 build the site
@@ -72,6 +75,7 @@ class Post:
     slug: str
     body: str
     source: Path
+    description: str = ""
 
 
 def find_secret(text: str) -> str | None:
@@ -396,7 +400,10 @@ def parse_post(path: Path) -> Post:
     slug = file_date.group(2)
     if not slug or slug in {".", ".."} or "/" in slug or "\\" in slug or len(slug) > 120:
         raise BuildError(f"{path.name} has a bad slug")
-    return Post(title, date, slug, match.group(2).lstrip("\n"), path)
+    description = meta.get("description", "").replace("\r", " ").replace("\n", " ").strip()
+    if len(description) > 300:
+        raise BuildError(f"{path.name} description is too long")
+    return Post(title, date, slug, match.group(2).lstrip("\n"), path, description)
 
 
 def load_posts() -> list[Post]:
@@ -419,10 +426,74 @@ def load_posts() -> list[Post]:
     return posts
 
 
-def page(title: str, body: str, depth: int) -> str:
+def site_url() -> str:
+    for name in ("domain.txt", "CNAME"):
+        path = ROOT / name
+        if path.is_file() and not path.is_symlink():
+            raw = path.read_text(encoding="utf-8").strip().lower()
+            if valid_domain(raw):
+                return f"https://{raw}/"
+    return PAGES_URL
+
+
+def first_quote(markdown: str) -> str:
+    for line in markdown.splitlines():
+        if line.startswith(">"):
+            text = line.lstrip("> ").strip()
+            text = re.sub(r"[*_`]", "", text)
+            return text[:300]
+    return ""
+
+
+def social_tags(title: str, description: str, url: str, image: str = "", alt: str = "",
+                size: tuple[int, int] | None = None, kind: str = "website", locale: str = "en_US") -> str:
+    def tag(attr: str, name: str, value: str) -> str:
+        return f'  <meta {attr}="{name}" content="{html.escape(value, quote=True)}">\n'
+
+    out = f'  <link rel="canonical" href="{html.escape(url, quote=True)}">\n'
+    out += tag("property", "og:type", kind)
+    out += tag("property", "og:site_name", AUTHOR)
+    out += tag("property", "og:locale", locale)
+    out += tag("property", "og:title", title)
+    out += tag("property", "og:description", description)
+    out += tag("property", "og:url", url)
+    if image:
+        out += tag("property", "og:image", image)
+        out += tag("property", "og:image:alt", alt or title)
+        if size:
+            out += tag("property", "og:image:width", str(size[0]))
+            out += tag("property", "og:image:height", str(size[1]))
+    out += tag("name", "twitter:card", "summary_large_image" if image else "summary")
+    out += tag("name", "twitter:title", title)
+    out += tag("name", "twitter:description", description)
+    if image:
+        out += tag("name", "twitter:image", image)
+        out += tag("name", "twitter:image:alt", alt or title)
+    return out
+
+
+def image_size(path: Path) -> tuple[int, int] | None:
+    data = path.read_bytes()
+    if data.startswith(b"\x89PNG\r\n\x1a\n") and len(data) >= 24:
+        return int.from_bytes(data[16:20], "big"), int.from_bytes(data[20:24], "big")
+    if data.startswith(b"\xff\xd8"):
+        i = 2
+        while i + 9 < len(data):
+            if data[i] != 0xFF:
+                i += 1
+                continue
+            marker = data[i + 1]
+            length = int.from_bytes(data[i + 2:i + 4], "big")
+            if marker in (0xC0, 0xC1, 0xC2):
+                return int.from_bytes(data[i + 7:i + 9], "big"), int.from_bytes(data[i + 5:i + 7], "big")
+            i += 2 + length
+    return None
+
+
+def page(title: str, body: str, depth: int, head_extra: str = "", description: str = "") -> str:
     prefix = "../" * depth
     css = f"{prefix}assets/style.css"
-    description = f"Writeups by {AUTHOR}."
+    description = description or f"Writeups by {AUTHOR}."
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -435,7 +506,7 @@ def page(title: str, body: str, depth: int) -> str:
   <meta name="theme-color" content="#0b4f40">
   <title>{html.escape(title)}</title>
   <link rel="stylesheet" href="{html.escape(css, quote=True)}">
-</head>
+{head_extra}</head>
 <body>
   <div class="wrap">
 {body}
@@ -473,7 +544,8 @@ def render_index(posts: list[Post]) -> str:
         f'    <header>\n      <h1 class="name"><a href="index.html">{html.escape(AUTHOR)}</a></h1>\n'
         f"    </header>\n{listing}"
     )
-    return page(AUTHOR, body, 0)
+    tags = social_tags(AUTHOR, f"Writeups by {AUTHOR}.", site_url())
+    return page(AUTHOR, body, 0, tags)
 
 
 def image_kind(data: bytes) -> str | None:
@@ -517,6 +589,36 @@ def image_handler(slug: str, planned: list[tuple[Path, Path]]):
     return on_image
 
 
+_PICTURE = re.compile(
+    r'<p><img src="(media/[^"<>]+)" alt="([^"<>]*)"></p>(?:\n<p><em>([^\n]*?)</em></p>)?'
+)
+
+
+def figures(article: str) -> str:
+    """Turn a picture paragraph, and the italic line under it, into a captioned figure."""
+    count = 0
+
+    def build(match: re.Match) -> str:
+        nonlocal count
+        src, alt, caption = match.group(1), match.group(2), match.group(3)
+        lazy = ' loading="lazy"' if count else ""
+        count += 1
+        dims = ""
+        source = (WRITEUPS / src[len("media/"):]).resolve()
+        if is_inside(source, WRITEUPS) and source.is_file():
+            size = image_size(source)
+            if size:
+                dims = f' width="{size[0]}" height="{size[1]}"'
+        out = (
+            f'<figure class="shot"><a href="{src}"><img src="{src}" alt="{alt}"{dims}{lazy} decoding="async"></a>'
+        )
+        if caption:
+            out += f"<figcaption>{caption}</figcaption>"
+        return out + "</figure>"
+
+    return _PICTURE.sub(build, article)
+
+
 def insert_after_banner(article: str, switch: str) -> str:
     if not switch:
         return article
@@ -530,21 +632,35 @@ def insert_after_banner(article: str, switch: str) -> str:
 
 def render_post(post: Post, planned: list[tuple[Path, Path]]) -> str:
     try:
-        article = render_blocks(post.body, image_handler(post.slug, planned))
+        article = figures(render_blocks(post.body, image_handler(post.slug, planned)))
     except BuildError as exc:
         raise BuildError(f"{post.source.name}: {exc}") from exc
     home = f'<a href="../../index.html">{html.escape(AUTHOR)}</a>'
     switch = ""
     if (WRITEUPS / post.slug / "ar.html").is_file():
-        switch = '<p class="lang"><a class="lang-btn" href="ar.html" hreflang="ar" lang="ar" dir="rtl">العربية</a></p>'
+        switch = '<p class="lang"><a class="lang-btn" href="ar.html" hreflang="ar" lang="ar" dir="rtl">عربي</a></p>'
         article = insert_after_banner(article, switch)
+    description = post.description or first_quote(post.body) or f"Writeups by {AUTHOR}."
+    base = site_url()
+    url = f"{base}posts/{post.slug}/"
+    image = alt = ""
+    size = None
+    for name in SHARE_NAMES:
+        candidate = WRITEUPS / post.slug / name
+        if candidate.is_file() and not candidate.is_symlink():
+            rel = image_handler(post.slug, planned)(f"{post.slug}/{name}")
+            image = f"{base}posts/{post.slug}/{rel}"
+            alt = post.title
+            size = image_size(candidate)
+            break
+    tags = social_tags(post.title, description, url, image, alt, size, "article")
     body = (
         f'    <p class="home">{home}</p>\n'
         f'    <h1 class="post-title" dir="auto">{html.escape(post.title)}</h1>\n'
         f'    <p class="when"><time datetime="{html.escape(post.date)}">{html.escape(post.date)}</time></p>\n'
         f'    <article dir="auto">\n{article}\n    </article>'
     )
-    return page(f"{post.title} — {AUTHOR}", body, 2)
+    return page(f"{post.title} — {AUTHOR}", body, 2, tags, description)
 
 
 def reset_posts() -> None:
@@ -581,11 +697,21 @@ def audit_html(page_html: str, depth: int) -> None:
     if f'href="{css}"' not in page_html:
         raise BuildError("page is missing its stylesheet")
     head = page_html.split("</head>", 1)[0]
+    base = re.escape(site_url())
+    head = re.sub(
+        r'<meta (?:property|name)="(?:og|twitter):[a-z:_]+" content="' + base + r'[^"]*">'
+        r'|<link rel="canonical" href="' + base + r'[^"]*">',
+        "",
+        head,
+    )
     if re.search(r"https?://", head):
         raise BuildError("the page head calls another site")
     for src in re.findall(r'<img src="([^"]*)"', page_html):
         if ".." in src or ":" in src or not src.startswith("media/"):
             raise BuildError("refusing an image that is not a local picture")
+    for href in re.findall(r'<figure class="shot"><a href="([^"]*)"', page_html):
+        if ".." in href or ":" in href or not href.startswith("media/"):
+            raise BuildError("refusing a picture link that is not a local picture")
 
 
 def valid_domain(value: str) -> bool:
@@ -631,7 +757,7 @@ def build_site() -> int:
     for post in posts:
         source = WRITEUPS / post.slug / "ar.html"
         if source.is_file() and not source.is_symlink():
-            ar_html = source.read_text(encoding="utf-8")
+            ar_html = figures(source.read_text(encoding="utf-8"))
             try:
                 audit_html(ar_html, 2)
             except BuildError as exc:

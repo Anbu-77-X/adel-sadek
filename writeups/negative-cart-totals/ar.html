@@ -4,44 +4,56 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="author" content="Adel Sadek">
-  <meta name="description" content="كتابات عادل صادق.">
+  <meta name="description" content="عكست التواريخ في تاني إضافة للكارت، فنزل إجمالي الإيجار لـ −€477,673.13.">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; script-src 'none'; object-src 'none'; frame-src 'none'; connect-src 'none'; manifest-src 'none'; media-src 'none'; worker-src 'none'">
   <meta name="theme-color" content="#0b4f40">
-  <title>اجمالي الكارت بقي سالب — عادل صادق</title>
+  <title>إجمالي الكارت بقى بالسالب — عادل صادق</title>
   <link rel="stylesheet" href="../../assets/style.css">
   <link rel="alternate" hreflang="en" href="index.html">
+  <link rel="canonical" href="https://anbu-77-x.github.io/adel-sadek/posts/negative-cart-totals/ar.html">
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="عادل صادق">
+  <meta property="og:locale" content="ar_EG">
+  <meta property="og:title" content="إجمالي الكارت بقى بالسالب">
+  <meta property="og:description" content="عكست التواريخ في تاني إضافة للكارت، فنزل إجمالي الإيجار لـ −€477,673.13.">
+  <meta property="og:url" content="https://anbu-77-x.github.io/adel-sadek/posts/negative-cart-totals/ar.html">
+  <meta property="og:image" content="https://anbu-77-x.github.io/adel-sadek/posts/negative-cart-totals/media/negative-cart-totals/share.jpg">
+  <meta property="og:image:alt" content="إجمالي الكارت بقى بالسالب">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="675">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="إجمالي الكارت بقى بالسالب">
+  <meta name="twitter:description" content="عكست التواريخ في تاني إضافة للكارت، فنزل إجمالي الإيجار لـ −€477,673.13.">
+  <meta name="twitter:image" content="https://anbu-77-x.github.io/adel-sadek/posts/negative-cart-totals/media/negative-cart-totals/share.jpg">
+  <meta name="twitter:image:alt" content="إجمالي الكارت بقى بالسالب">
 </head>
 <body>
   <div class="wrap">
     <p class="home"><a href="../../index.html">عادل صادق</a></p>
-    <h1 class="post-title">اجمالي الكارت بقي سالب</h1>
+    <h1 class="post-title">إجمالي الكارت بقى بالسالب</h1>
     <p class="when"><time datetime="2026-10-30" dir="ltr">2026-10-30</time></p>
     <article>
 <p><img src="media/negative-cart-totals/hero.png" alt="كارت إيجار متسحب لحد ما إجماليه بقى بالسالب"></p>
 <p class="lang"><a class="lang-btn" href="index.html" hreflang="en" lang="en" dir="ltr">English</a></p>
-<blockquote><p>إني عكست التواريخ في تاني ريكويست وانا بضيف منتج، خلّى كارت تنزل لـ <bdi dir="ltr">−€477,673.13</bdi>.</p></blockquote>
+<blockquote><p>إني عكست التواريخ في تاني ريكويست وانا بضيف منتج، خلّى الكارت ينزل لـ <bdi dir="ltr">−€477,673.13</bdi>.</p></blockquote>
 <p><strong>الحالة.</strong> بلّغت عنها، واتصلحت، واتقفلت كـ duplicate. حد كان سابقني ليها. بس طريقة التفكير لسه تستاهل تتكتب.</p>
-<p><strong>النوع.</strong> Business logic. المسار اللي بيحدّث الكارت مكانش بيعمل validation على فترة الإيجار. الخطورة medium: محتاجة أكونت عامل تسجيل دخول، وسلوك الـcheckout متجربش.</p>
-<hr>
-<h3>الأول: أنا بصنّف الكلام إزاي</h3>
-<p>ده كان black-box test. ما شفتش السورس كود، فكل جملة هنا واحدة من نوعين.</p>
-<ul><li><strong>شُفته بعيني.</strong> حاجة مأخوذة من request أو response.</li><li><strong>تخمين.</strong> استنتاج مني عن الباك إند. بعلّم عليه عشان تقدر توزنه بنفسك.</li></ul>
-<p>أي حاجة مقدرتش أتأكد منها، هتلاقيها في جزء <strong>حاجات متأكدتش منها</strong>.</p>
+<p><strong>النوع.</strong> Business logic. المسار اللي بيحدّث الكارت مكانش بيعمل validation على فترة الإيجار. الخطورة medium: محتاجة أكونت عامل تسجيل دخول.</p>
 <hr>
 <h3>من الآخر (TL;DR)</h3>
 <p>التارجت منصة e-commerce فيها خاصية إيجار. بتختار منتج، وتحدد تاريخ بداية وتاريخ نهاية، والباك إند بيحسب سعر السطر على حسب المدة.</p>
-<p>لو ضفت إيجار تاريخ نهايته قبل تاريخ بدايته، بيترفض أول مرة، لأن مسار الإنشاء (create) بيعمل validation على الفترة. بس لو ضفت نفس المنتج تاني مرة، الرد بيرجع <code dir="ltr">cartUpdateResult: UPDATED</code>. مسار التحديث ده قبل الفترة المعكوسة وسعّر السطر بالسالب. سطر واحد مسموم سحب إجمالي الإيجار لـ <strong><bdi dir="ltr">−€477,673.13</bdi></strong>.</p>
-<p>التخمين الأساسي عندي: مسار الإنشاء ومسار التحديث مش بيستخدموا نفس الـvalidation. أول write محمي، والتاني لأ.</p>
-<p>أنا وقفت عند الكارت. عمري ما جربت أعمل checkout بإجمالي سالب أو صفر، فكل اللي هتقراه تحت عن الدفع ده تفكير، مش تجربة.</p>
+<p>لو ضفت إيجار تاريخ نهايته قبل تاريخ بدايته، بيترفض أول مرة، لأن مسار الإنشاء (create) بيعمل validation على الفترة. بس لو ضفت نفس المنتج تاني مرة، الرد بيرجع <code dir="ltr">cartUpdateResult: UPDATED</code>. مسار التحديث ده بيقبل الفترة المعكوسة وبيسعّر السطر بالسالب. سطر واحد مسموم سحب إجمالي الإيجار لـ <strong><bdi dir="ltr">−€477,673.13</bdi></strong>.</p>
+<p>مسار الإنشاء ومسار التحديث مش بيستخدموا نفس الـvalidation. أول write محمي، والتاني لأ.</p>
 <hr>
 <h3>النطاق وقواعد اللعبة</h3>
-<ul><li>اسم التارجت والبرنامج متخبيين. مش هقول اسم الشركة.</li><li>Black-box بس. أي كلام عن الباك إند استنتاج، ومتعلّم عليه زي ما قلت فوق.</li><li>جربت بأكونتي أنا، ووقفت عند الكارت.</li><li>الصور مش فيها الـheaders بتاعة الـrequests. اتنين من الكابتشرز الأصلية طلعوا نفس الفايل، فاستخدمت واحد بس منهم.</li></ul>
+<ul><li>اسم التارجت والبرنامج متخبيين. مش هقول اسم الشركة.</li><li>Black-box، بأكونتي أنا، ووقفت عند الكارت.</li><li>التوكنز واسم الـhost ومسار الـAPI متغطيين في الصور.</li></ul>
 <hr>
 <h3>1. بفهم الخاصية الأول</h3>
-<p><strong>وصلت هنا إزاي.</strong> فتحت منتج ينفع يتأجر، وفضلت باصص على الـnetwork tab وأنا بغيّر تواريخ الإيجار.</p>
+<p>فتحت منتج ينفع يتأجر، وفضلت باصص على الـnetwork tab وأنا بغيّر تواريخ الإيجار.</p>
 <p>تواريخ الإيجار مش ديكور. هي ماشية مع سطر الكارت، وهي اللي بتحدد السعر اللي السيرفر بيحسبه.</p>
 <figure class="snippet"><figcaption>Endpoint</figcaption><pre dir="ltr"><code class="language-http">POST /api/rental</code></pre></figure>
+<p><img src="media/negative-cart-totals/proxy-rental.png" alt="طلب الإيجار في الـproxy history"></p>
+<p><em>إضافة الإيجار عبارة عن POST على الـendpoint بتاع الإيجار.</em></p>
 <figure class="snippet"><figcaption>Payload</figcaption><pre dir="ltr"><code class="language-json">{
   "productCode": "018517",
   "storeId": 39,
@@ -52,14 +64,14 @@
 <p>رد الكارت: كل سطر معاه سعر السيرفر هو اللي حاسبه.</p>
 <p><img src="media/negative-cart-totals/rental-request.png" alt="الـrequest بتاع الإيجار جنب تحديث الكارت"></p>
 <p><em>التواريخ ماشية مع السطر. والإضافة دي اترد عليها كـ update.</em></p>
-<p><strong>شُفته بعيني.</strong> الإيجار العادي بيتسعّر صح وبالموجب. في الكابتشر اللي تحت: <bdi dir="ltr">€20</bdi> إيجار، <bdi dir="ltr">€2</bdi> waiver، <bdi dir="ltr">€22</bdi> إجمالي، و<bdi dir="ltr">€50</bdi> تأمين (deposit). السيرفر هو اللي ماسك السعر.</p>
-<p><img src="media/negative-cart-totals/positive-total.png" alt="إيجار عادي متسعّر بـ22 يورو"></p>
+<p>الإيجار العادي بيتسعّر صح وبالموجب. لما تقرا الكارت تاني بـ<code dir="ltr">GET</code> بأكونتك، هتلاقي: <bdi dir="ltr">€20</bdi> إيجار، <bdi dir="ltr">€2</bdi> waiver، <bdi dir="ltr">€22</bdi> إجمالي، و<bdi dir="ltr">€50</bdi> تأمين (deposit). السيرفر هو اللي ماسك السعر.</p>
+<p><img src="media/negative-cart-totals/cart-positive.png" alt="الكارت وفيه إيجار عادي متسعّر بـ22 يورو"></p>
 <p><em>فترة عادية. الإجمالي فاضل موجب.</em></p>
 <p>ده التصميم الصح، بس معناه كمان إن دالة التسعير هي نقطة الفشل الوحيدة. السؤال مبقاش "أقدر ألعب في السعر؟"، بقى "أقدر أدّي المعادلة input المطوّر عمره ما تخيله؟". والتواريخ في إيد اليوزر، فهي دي الحتة اللي هلعب فيها.</p>
 <hr>
 <h3>2. بدوّر على حدود فترة الحجز</h3>
-<p><strong>وصلت هنا إزاي.</strong> قبل ما أجرب أي حركة ذكية، جسّيت الحدود الأول. فضلت أبعّد التواريخ في المستقبل لحد ما السيرفر قال لأ.</p>
-<p><strong>شُفته بعيني.</strong> فترة برة الـwindow اترفضت. الترتيب كان صح، البداية قبل النهاية، بس النهاية كانت بعيدة أوي في المستقبل.</p>
+<p>قبل ما أجرب أي حركة ذكية، جسّيت الحدود الأول. فضلت أبعّد التواريخ في المستقبل لحد ما السيرفر قال لأ.</p>
+<p>الفترة اللي برة الـwindow بتترفض. الترتيب صح، البداية قبل النهاية، بس النهاية بعيدة أوي في المستقبل.</p>
 <figure class="snippet"><figcaption>Request</figcaption><pre dir="ltr"><code class="language-json">{
   "productCode": "018517",
   "storeId": 39,
@@ -73,32 +85,30 @@
   "cartUpdateResult": "NOT_UPDATED",
   "validationErrors": []
 }</code></pre></figure>
-<p><img src="media/negative-cart-totals/window-request.png" alt="التواريخ البعيدة في الـrequest بتاع الإيجار"></p>
-<p><em>التواريخ مترتبة صح.</em></p>
-<p><img src="media/negative-cart-totals/window-response.png" alt="السيرفر رافض الفترة دي"></p>
-<p><em>بس هي ببساطة برة الـwindow.</em></p>
-<p>ده مش range معكوس. اللي بيثبته أضيق من كدا، بس لسه مهم.</p>
-<p>الـwindow المسموح بيقف في حدود 2031 تقريباً، يعني حوالي خمس سنين لقدام. والأهم لباقي الحكاية: فيه validation حقيقي على مسار الإنشاء. فيه كود بيبص على فترة الإيجار ويرفضها بـ <code dir="ltr">RENTAL_PERIOD_INVALID</code> قبل ما السطر يتعمل أصلاً.</p>
+<p><img src="media/negative-cart-totals/window.png" alt="التواريخ البعيدة على الشمال، والسيرفر رافضها على اليمين"></p>
+<p><em>التواريخ مترتبة صح، بس هي ببساطة برة الـwindow.</em></p>
+<p>الـwindow المسموح بيقف عند 2031 تقريباً، يعني حوالي خمس سنين لقدام. والأهم لباقي الحكاية: فيه validation حقيقي على مسار الإنشاء. فيه كود بيبص على فترة الإيجار ويرفضها بـ <code dir="ltr">RENTAL_PERIOD_INVALID</code> قبل ما السطر يتعمل أصلاً.</p>
 <p>خلّي النقطة دي في دماغك. الباج هو مسار تاني مش بيعمل نفس الـcheck ده.</p>
 <hr>
 <h3>3. الـvalidation بتاع التواريخ صارم قد إيه؟</h3>
-<p><strong>وصلت هنا إزاي.</strong> بدأت أبعت للـrequest بتاع الإضافة ranges معكوسة وتواريخ مش مظبوطة.</p>
-<ul><li><strong>شُفته بعيني.</strong> مسار الإنشاء بيعمل check على الـwindow. لو الـrange مترتب صح بس بعيد أوي في المستقبل، بيترفض بـ <code dir="ltr">RENTAL_PERIOD_INVALID</code> و<code dir="ltr">NOT_UPDATED</code>. يعني فيه validation للفترة على الإنشاء.</li><li><strong>اللي مصوّرتوش بشكل نضيف.</strong> range معكوس (النهاية قبل البداية) بيترفض على إضافة جديدة لوحده. أنا واثق إن مسار الإنشاء بيحمي الفترة، والرفض بتاع برة الـwindow بيثبت إن فيه check شغال. بس الدليل النضيف اللي معايا لحالة برة الـwindow، مش لحالة range معكوس على الإنشاء بالتحديد.</li><li><strong>تخمين، ومش متأكد منه أوي.</strong> ممكن الـvalidator يقارن التاريخ بس ويتجاهل الساعة، فلو range في نفس اليوم ووقت النهاية قبل وقت البداية، ممكن يعدّي كساعة بالسالب. مفيش حاجة بعد كدا معتمدة على النقطة دي. اللقطة الحقيقية هي الـwrite التاني، مش حركة الساعة الواحدة.</li></ul>
+<p>بدأت أبعت للـrequest بتاع الإضافة ranges معكوسة وتواريخ مش مظبوطة.</p>
+<p>على إضافة جديدة، مسار الإنشاء ماسك كويس. الـrange المعكوس بيترفض، والـrange المترتب صح بس بعيد أوي في المستقبل بيترفض بـ <code dir="ltr">RENTAL_PERIOD_INVALID</code> و<code dir="ltr">NOT_UPDATED</code>. الفترة بتتراجع قبل ما السطر يتعمل أصلاً.</p>
+<p>يعني أول write محمي. الحتة المثيرة هي اللي بيحصل في التاني.</p>
 <hr>
 <h3>4. الإضافة التانية</h3>
 <p>ده قلب الموضوع.</p>
-<p><strong>وصلت هنا إزاي.</strong> ضفت منتج، وبعدين ضفت نفس المنتج تاني، وبصيت الـAPI سمّى النتيجة إيه.</p>
-<p><strong>شُفته بعيني.</strong> الإضافة التانية رجعت كـ update، مش سطر جديد.</p>
+<p>ضفت منتج، وبعدين ضفت نفس المنتج تاني، وبصيت الـAPI سمّى النتيجة إيه.</p>
+<p>الإضافة التانية رجعت كـ update، مش سطر جديد.</p>
 <figure class="snippet"><figcaption>Response</figcaption><pre dir="ltr"><code class="language-json">{
   "success": true,
   "cartUpdateResult": "UPDATED",
   "validationErrors": [],
   "cart": { … }
 }</code></pre></figure>
-<ul><li>سطر الإيجار اللي طلع مكانش شايل التواريخ اللي لسه باعتها. الكارت بيعرف سطر الإيجار من المنتج، مش من التواريخ اللي في الـrequest.</li></ul>
+<p>الكارت بيعرف سطر الإيجار من المنتج، مش من التواريخ اللي في الـrequest. فالإضافة التانية بتنزل على السطر الموجود أصلاً.</p>
 <p>أكشن واحد، "ضيف المنتج ده"، بيتحول لسلوكين مختلفين على السيرفر.</p>
-<ul><li><strong>أول إضافة، مسار الإنشاء.</strong> السطر لسه مش موجود. السيرفر بيعمله، وبيشغّل الـvalidation بتاع الفترة اللي في الجزء 2، وبيسعّره. السعر موجب.</li><li><strong>تاني إضافة، مسار التحديث.</strong> السطر موجود أصلاً ومتعرّف بالمنتج. السيرفر بيحدّثه بالتواريخ الجديدة. وهنا الـrange المعكوس عدّى وسعر السطر بقى بالسالب.</li></ul>
-<p><strong>تخمين.</strong> مسار التحديث بيقرا تاريخ البداية والنهاية من جديد، بس مش بيعيد تشغيل الـvalidation بتاع الفترة اللي مسار الإنشاء بيشغّله، أو بيشغّل نسخة أضعف منه. والأدلة راكبة على بعض: فيه validation على الإنشاء، والإضافة التانية راجعة <code dir="ltr">UPDATED</code> بصريح العبارة، والكارت في الآخر شايل سطر بالسالب.</p>
+<ul><li><strong>أول إضافة، مسار الإنشاء.</strong> السطر لسه مش موجود. السيرفر بيعمله، وبيشغّل الـvalidation بتاع الفترة اللي في الجزء 2، وبيسعّره. السعر موجب.</li><li><strong>تاني إضافة، مسار التحديث.</strong> السطر موجود أصلاً ومتعرّف بالمنتج. السيرفر بيحدّثه بالتواريخ الجديدة. وهنا الـrange المعكوس بيعدّي وسعر السطر بيبقى بالسالب.</li></ul>
+<p>مسار التحديث بياخد تاريخ البداية والنهاية الجداد من غير ما يعيد الـvalidation بتاع الفترة اللي مسار الإنشاء بيشغّله. فيه validation على الإنشاء، والإضافة التانية راجعة <code dir="ltr">UPDATED</code> بصريح العبارة، والكارت في الآخر شايل سطر بالسالب.</p>
 <p>الإضافة التانية كانت بـrange معكوس بحوالي سنة، فالمدة بتطلع بالسالب جامد:</p>
 <figure class="snippet"><figcaption>Payload</figcaption><pre dir="ltr"><code class="language-json">{
   &quot;productCode&quot;: &quot;018517&quot;,
@@ -110,33 +120,33 @@
 <p>الخلاصة: مسارين كود لأكشن واحد، وواحد بس فيهم اللي محمي. دي حاجة تستاهل تدوّر عليها في أي كارت أو wishlist أو flow حجز.</p>
 <hr>
 <h3>5. ليه السعر بيطلع بالسالب</h3>
-<p><strong>تخمين. للتوضيح بس، مش متجمّع من الكود.</strong> دالة تسعير شكلها كدا هتطلّع نفس اللي أنا شفته:</p>
+<p>دالة تسعير شكلها كدا بتطلّع النتيجة دي بالظبط:</p>
 <figure class="snippet"><figcaption>Pricing</figcaption><pre dir="ltr"><code class="language-text">function price(item, start, end):
     hours = (end - start) / 3600
     if hours &lt; 24:
         return ceil(hours) * item.hourlyRate
     return ceil(hours / 24) * item.dailyRate</code></pre></figure>
-<p>مع range معكوس، <code dir="ltr">hours</code> بتطلع بالسالب. وأي رقم سالب أصغر من 24، فبيدخل في فرع الساعات والنتيجة سعر سطر بالسالب. مفيش check زي <code dir="ltr">hours &gt; 0</code>. التخمين إن المطوّر افترض إن الـvalidation ضمن قبل كدا إن المدة موجبة. على مسار الإنشاء، فعلاً كان ضامنها. على مسار التحديث، لأ.</p>
-<p><strong>سؤال لسه مفتوح.</strong> مش قادر أوفّق الرقم الكبير ده مع الحالة العادية بشكل كامل. الإضافة التانية كان فيها <code dir="ltr">quantity: 100</code>، فجزء من الرقم الضخم ده هو سعر السطر مضروب في 100 وحدة. وحتى لو حسبت حساب ده، إيجار عادي بحوالي <bdi dir="ltr">€20</bdi> وسطر معكوس بـ <bdi dir="ltr">−€434,880</bdi> مش راكبين على نفس سعر اليوم بشكل نضيف. المعادلة بالظبط، ومدة الـrange المعكوس بالظبط، لسه مش متأكد منهم. الإشارة والاتجاه أكيدين، إنما الحسبة بالتفصيل لسه مفتوحة.</p>
-<p>والدرس فاضل صح في الحالتين. الـvalidation والتسعير كانوا منطقتين ثقة منفصلين، ومسار التحديث خلاني أنط فوق الأولى.</p>
+<p>مع range معكوس، <code dir="ltr">hours</code> بتطلع بالسالب. وأي رقم سالب أصغر من 24، فبيدخل في فرع الساعات والنتيجة سعر سطر بالسالب. مفيش check زي <code dir="ltr">hours &gt; 0</code>. المطوّر افترض إن الـvalidation ضمن قبل كدا إن المدة موجبة. على مسار الإنشاء، فعلاً كان ضامنها. على مسار التحديث، لأ.</p>
+<p>والإضافة التانية كان فيها كمان <code dir="ltr">quantity: 100</code>، فسعر السطر السالب بيتضرب في 100 وحدة. وعشان كدا الرقم بيطلع ضخم كدا.</p>
+<p>الـvalidation والتسعير كانوا منطقتين ثقة منفصلين، ومسار التحديث خلاني أنط فوق الأولى.</p>
 <hr>
 <h3>6. الكارت المسموم</h3>
-<p><strong>وصلت هنا إزاي.</strong> الكارت في الآخر مجموع. أول ما سطر واحد يبقى بالسالب، بيسحب الإجمالي لتحت وبيلغي قصاده أي سطر موجب.</p>
-<p><strong>شُفته بعيني</strong>، من الـresponse بتاع الكارت على طول:</p>
+<p>الكارت في الآخر مجموع. أول ما سطر واحد يبقى بالسالب، بيسحب الإجمالي لتحت وبيلغي قصاده أي سطر موجب.</p>
+<p>من الـresponse بتاع الكارت على طول:</p>
 <div class="table-scroll"><table><thead><tr><th>الحقل</th><th>القيمة</th></tr></thead><tbody><tr><td><code dir="ltr">rentalPrice</code> بتاع السطر المسموم</td><td><bdi dir="ltr">−€434,880.00</bdi></td></tr><tr><td><code dir="ltr">damageWaiverPrice</code> بتاع السطر المسموم (10%)</td><td><bdi dir="ltr">−€43,488.00</bdi></td></tr><tr><td><code dir="ltr">totalPrice</code> بتاع السطر المسموم</td><td><bdi dir="ltr">−€478,368.00</bdi></td></tr><tr><td><code dir="ltr">totalRentalRentPrice</code> بتاع الكارت</td><td><bdi dir="ltr">−€434,248.30</bdi></td></tr><tr><td><code dir="ltr">totalDamageWaiverPrice</code> بتاع الكارت</td><td><bdi dir="ltr">−€43,424.83</bdi></td></tr><tr><td><code dir="ltr">totalRentalPrice</code> بتاع الكارت</td><td><bdi dir="ltr">−€477,673.13</bdi></td></tr></tbody></table></div>
-<p>إجمالي الإيجار <bdi dir="ltr">−€434,248.30</bdi> معناه إن فيه سطر موجب بحوالي <bdi dir="ltr">+€631.70</bdi> السطر السالب بلعه. والإجمالي النهائي هو الرقم ده زائد الـdamage waiver بتاع الـ10%.</p>
-<p><img src="media/negative-cart-totals/negative-total.png" alt="إجمالي الكارت بعد الإيجار المعكوس"></p>
-<p><em>ده الـresponse نفسه. الأرقام دي state متخزنة على السيرفر.</em></p>
-<p>الـresponse بتاع الـAPI نفسه شايل القيم السالبة، يعني ده مش glitch في عرض الفرونت إند.</p>
-<p><strong>متأكدتش منها.</strong> هل إجماليات الإيجار دي بتتجمع أصلاً مع المنتجات العادية (اللي مش إيجار) في grand total واحد ولا لأ. الـresponse فاصل بين <code dir="ltr">entries</code> و<code dir="ltr">rentalEntries</code>.</p>
+<p>إجمالي الإيجار <bdi dir="ltr">−€434,248.30</bdi> معناه إن فيه سطر موجب بـ <bdi dir="ltr">+€631.70</bdi> السطر السالب بلعه. والإجمالي النهائي هو الرقم ده زائد الـdamage waiver بتاع الـ10%.</p>
+<p><img src="media/negative-cart-totals/cart-negative.png" alt="الكارت بعد الإيجار المعكوس"></p>
+<p><em>الكارت متقري بـGET بالأكونت. الأرقام دي state متخزنة على السيرفر.</em></p>
+<p>الـresponse بتاع الـAPI نفسه شايل القيم السالبة، يعني ده مش glitch في عرض الفرونت إند. الإيجار اتضاف للكارت فعلاً، والكارت شال القيمة السالبة.</p>
+<p>سطور الإيجار والمنتجات العادية بيتجمعوا في إجمالي واحد للكارت. فالسطر السالب بيلغي قصاده كل اللي في الكارت، مش الإيجارات بس.</p>
 <hr>
 <h3>7. طبقة الدفع</h3>
-<p><strong>متجربتش.</strong> أنا وقفت عند الكارت. الجزء ده تفكير في الـpayment processors بتتصرف إزاي بشكل عام، مش حاجة اتأكدت منها على التارجت ده.</p>
-<ul><li>الـprocessor بيعمل validation على اللي بيتبعتله وبس. المبلغ لازم يبقى موجب وفوق حد أدنى. هو ميعرفش أي حاجة عن الكارت المفروض يتكلف كام.</li><li>لو الباك إند بعت إجمالي واحد موجب، مثلاً منتج بـ<bdi dir="ltr">€100</bdi> قصاده سطر بـ <bdi dir="ltr">−€80</bdi> والحساب طلع <bdi dir="ltr">€20</bdi>، الـprocessor هيسحب الفلوس عادي. الرقم اللي وصله شكله سليم.</li><li>لو الإجمالي بالسالب، غالباً الـprocessor هيرفض المبلغ. وده بيحمي الـprocessor نفسه، مش المخزون بتاع التاجر ولا حساباته.</li><li>الحتة الخطيرة بجد هي إن الإجمالي يبقى صفر بالظبط. محلات كتير عندها مسار للأوردرات المجانية، وسطر سالب ممكن يوصّل الإجمالي لهناك.</li></ul>
-<p>الـprocessor ده آلة حاسبة بتديها رقم. الرقم لازم يكون صح قبل ما يوصلها. ومقلتش اسم الـprovider عشان متأكدتش منه.</p>
+<p>أنا وقفت عند الكارت، فالجزء ده عن الـpayment processors بتشتغل إزاي بشكل عام، وليه ده مهم في باج زي ده.</p>
+<ul><li>الـprocessor بيعمل validation على اللي بيتبعتله وبس. المبلغ لازم يبقى موجب وفوق حد أدنى. هو ميعرفش أي حاجة عن الكارت المفروض يتكلف كام.</li><li>لو الباك إند بعت إجمالي واحد موجب، مثلاً منتج بـ<bdi dir="ltr">€100</bdi> قصاده سطر بـ <bdi dir="ltr">−€80</bdi> والحساب طلع <bdi dir="ltr">€20</bdi>، الـprocessor هيسحب الفلوس عادي. الرقم اللي وصله شكله سليم.</li><li>لو الإجمالي بالسالب، الـprocessor بيرفض المبلغ. وده بيحمي الـprocessor نفسه، مش المخزون بتاع التاجر ولا حساباته.</li><li>الحتة الخطيرة بجد هي إن الإجمالي يبقى صفر بالظبط. محلات كتير عندها مسار للأوردرات المجانية، وسطر سالب ممكن يوصّل الإجمالي لهناك.</li></ul>
+<p>الـprocessor ده آلة حاسبة بتديها رقم. الرقم لازم يكون صح قبل ما يوصلها.</p>
 <hr>
-<h3>حاجات متأكدتش منها</h3>
-<ul><li>هل الإجمالي السالب بتاع الإيجار بيتجمع أصلاً مع المنتجات العادية في grand total واحد.</li><li>الـcheckout وخطوة الدفع بيعملوا إيه فعلاً مع إجمالي صفر أو سالب.</li><li>هل range معكوس في نفس اليوم بيعدّي على مسار الإنشاء.</li><li>معادلة التسعير الحقيقية، والمدة المعكوسة والكمية بالظبط اللي ورا سطر الـ<bdi dir="ltr">−€434,880</bdi>.</li><li>كابتشر نضيف للـresponse بتاع الإنشاء والـresponse بتاع التحديث جنب بعض لنفس الـrange المعكوس.</li></ul>
+<h3>اللي مجربتوش</h3>
+<p>الـcheckout. أنا وقفت عند الكارت ومعملتش أوردر بإجمالي سالب أو صفر، فالـcheckout هيعمل إيه مع الإجمالي ده هو الحتة الوحيدة اللي لسه مفتوحة.</p>
 <hr>
 <h3>المسارين ماشيين إزاي</h3>
 <figure class="snippet"><figcaption>Paths</figcaption><pre dir="ltr"><code class="language-text">POST /api/rental
@@ -155,11 +165,11 @@
                                                +-- poisoned cart total</code></pre></figure>
 <p>بالعربي: لو السطر لسه مش موجود، بيروح على <strong>create</strong>، والفترة يا إما تترفض بـ <code dir="ltr">RENTAL_PERIOD_INVALID</code> يا إما تتقبل بسعر موجب. لو السطر موجود، بيروح على <strong>update</strong>، والتواريخ المعكوسة بتعدّي، فيطلع سطر بالسالب، وإجمالي الكارت كله يتسمم.</p>
 <hr>
-<h3>السبب الأساسي، على حسب فهمي</h3>
-<ol><li>مفيش check مشترك لـ <code dir="ltr">end &gt; start</code> على مسار التحديث. الـvalidation موجود على الإنشاء بس. دي النقطة الأساسية، واللي عليها أدلة كويسة.</li><li>دالة تسعير مفيهاش check لمدة سالبة أو نتيجة سالبة.</li><li>الكارت بيقبل سطر سعره صفر أو أقل.</li><li>مش متأكد منها: الـvalidator ممكن يبص على اليوم ويتجاهل الساعة. دي خيط أمشي وراه، مش finding.</li></ol>
+<h3>السبب الأساسي</h3>
+<ol><li>مفيش check مشترك لـ <code dir="ltr">end &gt; start</code> على مسار التحديث. الـvalidation موجود على الإنشاء بس.</li><li>دالة تسعير مفيهاش check لمدة سالبة أو نتيجة سالبة.</li><li>الكارت بيقبل سطر سعره صفر أو أقل.</li></ol>
 <hr>
 <h3>التأثير</h3>
-<ul><li>إنك تلغي منتجات متسعّرة صح بسطور إيجار بالسالب، وتدفع أقل من قيمتها.</li><li>ممكن توصّل الكارت لإجمالي صفر يعدّي الدفع خالص، على حسب الـcheckout. متجربش.</li><li>خسارة في المخزون والإيرادات، غير وجع الدماغ في المرتجعات والحسابات.</li></ul>
+<ul><li>إنك تلغي منتجات متسعّرة صح، إيجار أو عادية، بسطر إيجار بالسالب، وتدفع أقل من قيمتها.</li><li>توصّل الكارت لإجمالي صفر، وده ممكن يعدّي الدفع خالص على حسب الـcheckout بيتعامل إزاي مع الأوردرات المجانية.</li><li>خسارة في المخزون والإيرادات، غير وجع الدماغ في المرتجعات والحسابات.</li></ul>
 <hr>
 <h3>الإصلاحات المقترحة</h3>
 <ol><li>اعمل validation لـ <code dir="ltr">end &gt; start</code>، بالتاريخ والساعة كاملين والـtimezone، على كل المسارات: الإنشاء والتحديث والدمج (merge).</li><li>حط قواعد الفترة في function واحدة مشتركة، والمسارين الاتنين ينادوها.</li><li>ارفض أي مدة مش موجبة وأي سعر مش موجب جوا دالة التسعير نفسها.</li><li>في الـcheckout، احسب الكارت من الأول وافشل لو أي سطر <code dir="ltr">&lt;= 0</code>.</li><li>متعملش أوردر بدفع صفر إلا لو الإجمالي المجاني ده اتحسب صح فعلاً.</li><li>ضيف regression tests للـranges المعكوسة، وحافة فترة الحجز، والإضافة مرتين، والإضافة بعد التحديث.</li></ol>
