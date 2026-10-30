@@ -9,7 +9,7 @@ date: 2026-10-30
 
 **Status.** Reported, fixed, and closed as a duplicate. Someone reached it before me. The reasoning is still worth writing down.
 
-**Class.** Business logic. The cart update path did not validate the rental period. Severity is medium: it needs an authenticated account.
+**Class.** Business logic. The cart update path did not validate the rental period. Severity is high.
 
 ---
 
