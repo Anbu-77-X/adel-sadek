@@ -30,7 +30,7 @@ body {
   overflow-x: clip;
   background-color: var(--night);
   /* Moonlight falling from the avatar onto the page. */
-  background-image: radial-gradient(34rem 24rem at var(--glow-x) -3rem, rgba(190, 205, 255, 0.11), transparent 70%);
+  background-image: radial-gradient(38rem 26rem at var(--glow-x) -3rem, rgba(190, 205, 255, 0.15), transparent 70%);
   background-repeat: no-repeat;
   color: var(--moon);
   font-family: "Iowan Old Style", Palatino, "Palatino Linotype", "Noto Naskh Arabic", Georgia, serif;

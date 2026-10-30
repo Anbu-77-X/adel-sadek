@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import html
 import os
 import re
@@ -23,10 +24,18 @@ THEME_COLOR = "#0d1120"
 AVATAR = ("assets/avatar.png", 192, 192)
 
 
+def asset_version() -> str:
+    """Short fingerprint of the stylesheet, so browsers fetch it again after every change."""
+    data = (ROOT / "assets" / "style.css").read_bytes()
+    return hashlib.sha256(data).hexdigest()[:8]
+
+
 def avatar_img(depth: int, alt: str = AUTHOR) -> str:
-    src, width, height = AVATAR
+    src = AVATAR[0]
     path = "../" * depth + src
-    return f'<img class="avatar" src="{path}" alt="{html.escape(alt, quote=True)}" width="{width}" height="{height}">'
+    # The size written here holds even before the stylesheet loads.
+    size = 48 if depth == 0 else 30
+    return f'<img class="avatar" src="{path}" alt="{html.escape(alt, quote=True)}" width="{size}" height="{size}">'
 
 
 def icon_links(depth: int) -> str:
@@ -514,7 +523,7 @@ def image_size(path: Path) -> tuple[int, int] | None:
 
 def page(title: str, body: str, depth: int, head_extra: str = "", description: str = "") -> str:
     prefix = "../" * depth
-    css = f"{prefix}assets/style.css"
+    css = f"{prefix}assets/style.css?v={asset_version()}"
     description = description or f"Writeups by {AUTHOR}."
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -716,8 +725,8 @@ def audit_html(page_html: str, depth: int) -> None:
         raise BuildError("refusing to write a page with an active URL")
     if re.search(r"(?i)(?:href|src)\s*=\s*[\"']\s*//", page_html):
         raise BuildError("refusing a protocol-relative URL")
-    css = "../" * depth + "assets/style.css"
-    if f'href="{css}"' not in page_html:
+    css = re.escape("../" * depth + "assets/style.css") + r"\?v=[0-9a-f]{8}"
+    if not re.search(f'href="{css}"', page_html):
         raise BuildError("page is missing its stylesheet")
     head = page_html.split("</head>", 1)[0]
     base = re.escape(site_url())
@@ -785,6 +794,11 @@ def build_site() -> int:
         source = WRITEUPS / post.slug / "ar.html"
         if source.is_file() and not source.is_symlink():
             ar_html = figures(source.read_text(encoding="utf-8"))
+            ar_html = re.sub(
+                r'href="\.\./\.\./assets/style\.css(?:\?v=[0-9a-f]+)?"',
+                f'href="../../assets/style.css?v={asset_version()}"',
+                ar_html,
+            )
             try:
                 audit_html(ar_html, 2)
             except BuildError as exc:
