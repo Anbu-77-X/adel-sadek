@@ -27,7 +27,7 @@ The create path and the update path do not share the same validation. The first 
 
 - The target and the program are redacted. I am not naming the company.
 - Black-box testing, with my own account. I stopped at the cart.
-- The figures omit request headers.
+- Tokens, hostnames, and the API path are redacted in the figures.
 
 ---
 
@@ -40,6 +40,10 @@ The rental dates are not decoration. They ride on the cart line and drive the se
 ```http Endpoint
 POST /api/rental
 ```
+
+![The rental call in the proxy history](negative-cart-totals/proxy-rental.png)
+
+*Adding a rental is a POST to the rental endpoint.*
 
 ```json Payload
 {
@@ -57,9 +61,9 @@ The cart response gives each line a server-computed price.
 
 *The dates travel with the line. This add was answered as an update.*
 
-A valid rental prices correctly and positively. In the capture below: €20 rent, €2 waiver, €22 total, and a €50 deposit. The server owns the price.
+A valid rental prices correctly and positively. Reading the cart back with an authenticated `GET` shows €20 rent, €2 waiver, €22 total, and a €50 deposit. The server owns the price.
 
-![A valid rental priced at twenty-two euro](negative-cart-totals/positive-total.png)
+![The cart read back with a valid rental priced at twenty-two euro](negative-cart-totals/cart-positive.png)
 
 *A normal period. The total stays positive.*
 
@@ -92,13 +96,9 @@ An out-of-window period is rejected. The range is in the right order, start befo
 }
 ```
 
-![The far-future dates on the rental request](negative-cart-totals/window-request.png)
+![The far-future dates on the left, the server refusing them on the right](negative-cart-totals/window.png)
 
-*The dates are in order.*
-
-![The server refusing that period](negative-cart-totals/window-response.png)
-
-*They are simply outside the window.*
+*The dates are in order. They are simply outside the window.*
 
 The valid window tops out around 2031, roughly five years out. More important for the rest of the story: real validation exists on the create path. A code path inspects the rental period and refuses it with `RENTAL_PERIOD_INVALID` before the line is created.
 
@@ -195,11 +195,13 @@ Straight from the cart response:
 
 The rent subtotal of −€434,248.30 means a positive line of +€631.70 is being swallowed by the negative one. The total is that subtotal plus the 10% damage waiver.
 
-![The cart total after the reversed rental](negative-cart-totals/negative-total.png)
+![The cart read back after the reversed rental](negative-cart-totals/cart-negative.png)
 
-*The response itself. These numbers are server-side state.*
+*The cart read back with an authenticated GET. These numbers are server-side state.*
 
 The API response holds the negative values, so this is not a front-end rendering glitch. The rent was added to the cart, and the cart carried the negative value.
+
+Rental lines and regular items roll up into the same cart total. The negative line offsets everything else in the cart, not only other rentals.
 
 ---
 
@@ -213,6 +215,12 @@ I stopped at the cart, so this section is about how payment processors work in g
 - The dangerous edge is a total of exactly 0. Many stores have a path for free orders, and a negative line can land the total there.
 
 The processor is a calculator you hand a number to. The number has to be correct before it arrives.
+
+---
+
+## What I didn't test
+
+Checkout. I stopped at the cart and never placed an order with a negative or zero total, so what checkout does with that total is the one open piece.
 
 ---
 
@@ -247,7 +255,7 @@ POST /api/rental
 
 ## Impact
 
-- Offset legitimately priced items with negative rental lines, and pay less than their value.
+- Offset legitimately priced items, rentals or not, with a negative rental line, and pay less than their value.
 - Steer a cart toward a zero total, which can skip payment depending on how checkout handles free orders.
 - Inventory and revenue loss, plus messy refund and accounting side effects.
 

@@ -589,6 +589,36 @@ def image_handler(slug: str, planned: list[tuple[Path, Path]]):
     return on_image
 
 
+_PICTURE = re.compile(
+    r'<p><img src="(media/[^"<>]+)" alt="([^"<>]*)"></p>(?:\n<p><em>([^\n]*?)</em></p>)?'
+)
+
+
+def figures(article: str) -> str:
+    """Turn a picture paragraph, and the italic line under it, into a captioned figure."""
+    count = 0
+
+    def build(match: re.Match) -> str:
+        nonlocal count
+        src, alt, caption = match.group(1), match.group(2), match.group(3)
+        lazy = ' loading="lazy"' if count else ""
+        count += 1
+        dims = ""
+        source = (WRITEUPS / src[len("media/"):]).resolve()
+        if is_inside(source, WRITEUPS) and source.is_file():
+            size = image_size(source)
+            if size:
+                dims = f' width="{size[0]}" height="{size[1]}"'
+        out = (
+            f'<figure class="shot"><a href="{src}"><img src="{src}" alt="{alt}"{dims}{lazy} decoding="async"></a>'
+        )
+        if caption:
+            out += f"<figcaption>{caption}</figcaption>"
+        return out + "</figure>"
+
+    return _PICTURE.sub(build, article)
+
+
 def insert_after_banner(article: str, switch: str) -> str:
     if not switch:
         return article
@@ -602,13 +632,13 @@ def insert_after_banner(article: str, switch: str) -> str:
 
 def render_post(post: Post, planned: list[tuple[Path, Path]]) -> str:
     try:
-        article = render_blocks(post.body, image_handler(post.slug, planned))
+        article = figures(render_blocks(post.body, image_handler(post.slug, planned)))
     except BuildError as exc:
         raise BuildError(f"{post.source.name}: {exc}") from exc
     home = f'<a href="../../index.html">{html.escape(AUTHOR)}</a>'
     switch = ""
     if (WRITEUPS / post.slug / "ar.html").is_file():
-        switch = '<p class="lang"><a class="lang-btn" href="ar.html" hreflang="ar" lang="ar" dir="rtl">العربية</a></p>'
+        switch = '<p class="lang"><a class="lang-btn" href="ar.html" hreflang="ar" lang="ar" dir="rtl">عربي</a></p>'
         article = insert_after_banner(article, switch)
     description = post.description or first_quote(post.body) or f"Writeups by {AUTHOR}."
     base = site_url()
@@ -679,6 +709,9 @@ def audit_html(page_html: str, depth: int) -> None:
     for src in re.findall(r'<img src="([^"]*)"', page_html):
         if ".." in src or ":" in src or not src.startswith("media/"):
             raise BuildError("refusing an image that is not a local picture")
+    for href in re.findall(r'<figure class="shot"><a href="([^"]*)"', page_html):
+        if ".." in href or ":" in href or not href.startswith("media/"):
+            raise BuildError("refusing a picture link that is not a local picture")
 
 
 def valid_domain(value: str) -> bool:
@@ -724,7 +757,7 @@ def build_site() -> int:
     for post in posts:
         source = WRITEUPS / post.slug / "ar.html"
         if source.is_file() and not source.is_symlink():
-            ar_html = source.read_text(encoding="utf-8")
+            ar_html = figures(source.read_text(encoding="utf-8"))
             try:
                 audit_html(ar_html, 2)
             except BuildError as exc:

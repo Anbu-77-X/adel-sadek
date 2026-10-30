@@ -33,8 +33,8 @@
     <h1 class="post-title" dir="auto">Negative Cart Totals</h1>
     <p class="when"><time datetime="2026-10-30">2026-10-30</time></p>
     <article dir="auto">
-<p><img src="media/negative-cart-totals/hero.png" alt="A rental cart pulled down to a negative total"></p>
-<p class="lang"><a class="lang-btn" href="ar.html" hreflang="ar" lang="ar" dir="rtl">العربية</a></p>
+<figure class="shot"><a href="media/negative-cart-totals/hero.png"><img src="media/negative-cart-totals/hero.png" alt="A rental cart pulled down to a negative total" width="1672" height="941" decoding="async"></a></figure>
+<p class="lang"><a class="lang-btn" href="ar.html" hreflang="ar" lang="ar" dir="rtl">عربي</a></p>
 <blockquote><p>Swapping the dates on a second add dragged a rental cart to −€477,673.13.</p></blockquote>
 <p><strong>Status.</strong> Reported, fixed, and closed as a duplicate. Someone reached it before me. The reasoning is still worth writing down.</p>
 <p><strong>Class.</strong> Business logic. The cart update path did not validate the rental period. Severity is medium: it needs an authenticated account.</p>
@@ -45,12 +45,13 @@
 <p>The create path and the update path do not share the same validation. The first write is guarded. The second write is not.</p>
 <hr>
 <h3>Scope and ground rules</h3>
-<ul><li>The target and the program are redacted. I am not naming the company.</li><li>Black-box testing, with my own account. I stopped at the cart.</li><li>The figures omit request headers.</li></ul>
+<ul><li>The target and the program are redacted. I am not naming the company.</li><li>Black-box testing, with my own account. I stopped at the cart.</li><li>Tokens, hostnames, and the API path are redacted in the figures.</li></ul>
 <hr>
 <h3>1. Mapping the feature</h3>
 <p>I opened a rentable product and watched the network tab while changing the rental dates.</p>
 <p>The rental dates are not decoration. They ride on the cart line and drive the server-computed price.</p>
 <figure class="snippet"><figcaption>Endpoint</figcaption><pre dir="ltr"><code class="language-http">POST /api/rental</code></pre></figure>
+<figure class="shot"><a href="media/negative-cart-totals/proxy-rental.png"><img src="media/negative-cart-totals/proxy-rental.png" alt="The rental call in the proxy history" width="1061" height="38" loading="lazy" decoding="async"></a><figcaption>Adding a rental is a POST to the rental endpoint.</figcaption></figure>
 <figure class="snippet"><figcaption>Payload</figcaption><pre dir="ltr"><code class="language-json">{
   &quot;productCode&quot;: &quot;018517&quot;,
   &quot;storeId&quot;: 39,
@@ -59,11 +60,9 @@
   &quot;quantity&quot;: 1
 }</code></pre></figure>
 <p>The cart response gives each line a server-computed price.</p>
-<p><img src="media/negative-cart-totals/rental-request.png" alt="The rental request beside a cart update"></p>
-<p><em>The dates travel with the line. This add was answered as an update.</em></p>
-<p>A valid rental prices correctly and positively. In the capture below: €20 rent, €2 waiver, €22 total, and a €50 deposit. The server owns the price.</p>
-<p><img src="media/negative-cart-totals/positive-total.png" alt="A valid rental priced at twenty-two euro"></p>
-<p><em>A normal period. The total stays positive.</em></p>
+<figure class="shot"><a href="media/negative-cart-totals/rental-request.png"><img src="media/negative-cart-totals/rental-request.png" alt="The rental request beside a cart update" width="1872" height="616" loading="lazy" decoding="async"></a><figcaption>The dates travel with the line. This add was answered as an update.</figcaption></figure>
+<p>A valid rental prices correctly and positively. Reading the cart back with an authenticated <code>GET</code> shows €20 rent, €2 waiver, €22 total, and a €50 deposit. The server owns the price.</p>
+<figure class="shot"><a href="media/negative-cart-totals/cart-positive.png"><img src="media/negative-cart-totals/cart-positive.png" alt="The cart read back with a valid rental priced at twenty-two euro" width="1878" height="600" loading="lazy" decoding="async"></a><figcaption>A normal period. The total stays positive.</figcaption></figure>
 <p>That is the right design, and it also means the pricing function is the single point of failure. The question stops being whether I can tamper with the price. It becomes whether I can hand the formula an input the developer never imagined. Dates are user-controlled, so that is the lever.</p>
 <hr>
 <h3>2. Finding the edges of the booking window</h3>
@@ -82,10 +81,7 @@
   &quot;cartUpdateResult&quot;: &quot;NOT_UPDATED&quot;,
   &quot;validationErrors&quot;: []
 }</code></pre></figure>
-<p><img src="media/negative-cart-totals/window-request.png" alt="The far-future dates on the rental request"></p>
-<p><em>The dates are in order.</em></p>
-<p><img src="media/negative-cart-totals/window-response.png" alt="The server refusing that period"></p>
-<p><em>They are simply outside the window.</em></p>
+<figure class="shot"><a href="media/negative-cart-totals/window.png"><img src="media/negative-cart-totals/window.png" alt="The far-future dates on the left, the server refusing them on the right" width="1876" height="692" loading="lazy" decoding="async"></a><figcaption>The dates are in order. They are simply outside the window.</figcaption></figure>
 <p>The valid window tops out around 2031, roughly five years out. More important for the rest of the story: real validation exists on the create path. A code path inspects the rental period and refuses it with <code>RENTAL_PERIOD_INVALID</code> before the line is created.</p>
 <p>Hold that thought. The bug is a second path that does not run this same check.</p>
 <hr>
@@ -134,14 +130,17 @@
 <p>Straight from the cart response:</p>
 <div class="table-scroll"><table><thead><tr><th>Field</th><th>Value</th></tr></thead><tbody><tr><td>Poisoned line <code>rentalPrice</code></td><td>−€434,880.00</td></tr><tr><td>Poisoned line <code>damageWaiverPrice</code> (10%)</td><td>−€43,488.00</td></tr><tr><td>Poisoned line <code>totalPrice</code></td><td>−€478,368.00</td></tr><tr><td>Cart <code>totalRentalRentPrice</code></td><td>−€434,248.30</td></tr><tr><td>Cart <code>totalDamageWaiverPrice</code></td><td>−€43,424.83</td></tr><tr><td>Cart <code>totalRentalPrice</code></td><td>−€477,673.13</td></tr></tbody></table></div>
 <p>The rent subtotal of −€434,248.30 means a positive line of +€631.70 is being swallowed by the negative one. The total is that subtotal plus the 10% damage waiver.</p>
-<p><img src="media/negative-cart-totals/negative-total.png" alt="The cart total after the reversed rental"></p>
-<p><em>The response itself. These numbers are server-side state.</em></p>
+<figure class="shot"><a href="media/negative-cart-totals/cart-negative.png"><img src="media/negative-cart-totals/cart-negative.png" alt="The cart read back after the reversed rental" width="1872" height="695" loading="lazy" decoding="async"></a><figcaption>The cart read back with an authenticated GET. These numbers are server-side state.</figcaption></figure>
 <p>The API response holds the negative values, so this is not a front-end rendering glitch. The rent was added to the cart, and the cart carried the negative value.</p>
+<p>Rental lines and regular items roll up into the same cart total. The negative line offsets everything else in the cart, not only other rentals.</p>
 <hr>
 <h3>7. The payment layer</h3>
 <p>I stopped at the cart, so this section is about how payment processors work in general, and why that matters for a bug like this.</p>
 <ul><li>A processor validates what it is sent. The amount has to be positive and above a minimum. It has no concept of what the cart should cost.</li><li>If the backend submits one positive total, for example a €100 item offset by a −€80 line and charged as €20, the processor charges it. The number it received looks fine.</li><li>If the total is negative, the processor rejects the amount. That protects the processor, not the merchant&#x27;s inventory or books.</li><li>The dangerous edge is a total of exactly 0. Many stores have a path for free orders, and a negative line can land the total there.</li></ul>
 <p>The processor is a calculator you hand a number to. The number has to be correct before it arrives.</p>
+<hr>
+<h3>What I didn&#x27;t test</h3>
+<p>Checkout. I stopped at the cart and never placed an order with a negative or zero total, so what checkout does with that total is the one open piece.</p>
 <hr>
 <h3>How the two paths line up</h3>
 <figure class="snippet"><figcaption>Paths</figcaption><pre dir="ltr"><code class="language-text">POST /api/rental
@@ -163,7 +162,7 @@
 <ol><li>No shared <code>end &gt; start</code> check on the update path. Validation lives on create only.</li><li>A pricing function with no check for a negative duration or a negative result.</li><li>The cart tolerates a line priced at zero or below.</li></ol>
 <hr>
 <h3>Impact</h3>
-<ul><li>Offset legitimately priced items with negative rental lines, and pay less than their value.</li><li>Steer a cart toward a zero total, which can skip payment depending on how checkout handles free orders.</li><li>Inventory and revenue loss, plus messy refund and accounting side effects.</li></ul>
+<ul><li>Offset legitimately priced items, rentals or not, with a negative rental line, and pay less than their value.</li><li>Steer a cart toward a zero total, which can skip payment depending on how checkout handles free orders.</li><li>Inventory and revenue loss, plus messy refund and accounting side effects.</li></ul>
 <hr>
 <h3>Recommended fixes</h3>
 <ol><li>Validate <code>end &gt; start</code>, with the full datetime and timezone, on every path: create, update, and merge.</li><li>Put the period rules in one shared function called by both paths.</li><li>Reject non-positive durations and non-positive prices inside the pricing function itself.</li><li>At checkout, recompute the cart and fail if any line is <code>&lt;= 0</code>.</li><li>Do not create a zero-payment order unless the free total was legitimately computed.</li><li>Add regression tests for reversed ranges, the edge of the booking window, add-twice, and add-after-update.</li></ol>
