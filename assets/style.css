@@ -1,13 +1,18 @@
+/* Night palette, taken from the avatar: night sky, moonlight, Gear 5 cloud. */
 :root {
-  --paper: #f3ecdf;
-  --paper-top: #f7f1e6;
-  --ink: #1b1914;
-  --muted: #4a433a;
-  --line: #e0d4c2;
-  --pine: #0b4f40;
-  --link: #08382e;
-  --code: #ebe2d2;
-  --select: #cfe3d8;
+  --night: #0d1120;
+  --panel: #131a31;
+  --moon: #e3e8f2;
+  --bright: #f4f6fb;
+  --haze: #8f9ab4;
+  --cloud: #c3bcf5;
+  --violet: #6c5ce7;
+  --line: rgba(195, 188, 245, 0.13);
+  --glow-x: max(1.25rem, calc(50% - 19rem));
+}
+
+[dir="rtl"] {
+  --glow-x: min(calc(100% - 1.25rem), calc(50% + 19rem));
 }
 
 * {
@@ -15,38 +20,35 @@
 }
 
 html {
-  color-scheme: light;
+  color-scheme: dark;
+  background: var(--night);
 }
 
 body {
   margin: 0;
   min-height: 100vh;
   overflow-x: clip;
-  background-color: var(--paper);
-  background-image: linear-gradient(180deg, var(--paper-top) 0%, var(--paper) 16rem);
-  color: var(--ink);
+  background-color: var(--night);
+  /* Moonlight falling from the avatar onto the page. */
+  background-image: radial-gradient(34rem 24rem at var(--glow-x) -3rem, rgba(190, 205, 255, 0.11), transparent 70%);
+  background-repeat: no-repeat;
+  color: var(--moon);
   font-family: "Iowan Old Style", Palatino, "Palatino Linotype", "Noto Naskh Arabic", Georgia, serif;
   font-size: 1.125rem;
-  line-height: 1.6;
+  line-height: 1.65;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
 
-body::before {
-  content: "";
-  display: block;
-  height: 0.45rem;
-  background: var(--pine);
-}
-
 ::selection {
-  background: var(--select);
-  color: var(--link);
+  background: rgba(108, 92, 231, 0.5);
+  color: var(--bright);
 }
 
 :focus-visible {
-  outline: 2px solid var(--pine);
+  outline: 2px solid var(--cloud);
   outline-offset: 3px;
+  border-radius: 0.25rem;
 }
 
 .wrap {
@@ -65,15 +67,10 @@ body::before {
 
 .name a,
 .home a {
+  display: inline-block;
   color: inherit;
   text-decoration: none;
-}
-
-.name a:hover,
-.name a:focus-visible,
-.home a:hover,
-.home a:focus-visible {
-  color: var(--pine);
+  border-radius: 50%;
 }
 
 .home {
@@ -81,8 +78,25 @@ body::before {
   font-size: 1rem;
 }
 
-.home a {
-  color: var(--pine);
+/* The avatar takes the name's place at the name's size. */
+.avatar {
+  display: block;
+  width: auto;
+  height: 1.15em;
+  filter: drop-shadow(0 0 0.45em rgba(200, 214, 255, 0.22));
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.35s ease;
+}
+
+.home .avatar {
+  height: 1.9em;
+}
+
+.name a:hover .avatar,
+.name a:focus-visible .avatar,
+.home a:hover .avatar,
+.home a:focus-visible .avatar {
+  transform: rotate(-8deg) scale(1.06);
+  filter: drop-shadow(0 0 0.6em rgba(200, 214, 255, 0.4));
 }
 
 .year-block {
@@ -95,7 +109,7 @@ body::before {
 
 .year {
   margin: 0 0 0.75rem;
-  color: var(--pine);
+  color: var(--cloud);
   font-size: 1.45rem;
   font-weight: 500;
   letter-spacing: -0.02em;
@@ -124,11 +138,11 @@ body::before {
 .when {
   font-family: ui-monospace, "Cascadia Code", "SFMono-Regular", Menlo, Consolas, monospace;
   font-size: 0.82rem;
-  color: var(--muted);
+  color: var(--haze);
 }
 
 .index a {
-  color: var(--ink);
+  color: var(--bright);
   font-size: 1.05rem;
   line-height: 1.45;
   text-decoration: none;
@@ -137,7 +151,7 @@ body::before {
 
 .index a:hover,
 .index a:focus-visible {
-  color: var(--link);
+  color: var(--cloud);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.18em;
@@ -147,11 +161,12 @@ body::before {
   margin: 2.8rem 0 0;
   padding-top: 1rem;
   border-top: 1px solid var(--line);
-  color: var(--muted);
+  color: var(--haze);
 }
 
 .post-title {
-  margin: 1.2rem 0 0.45rem;
+  margin: 1.4rem 0 0.45rem;
+  color: var(--bright);
   font-size: clamp(1.85rem, 4vw, 2.4rem);
   font-weight: 500;
   letter-spacing: -0.03em;
@@ -174,10 +189,10 @@ a.lang-btn,
   gap: 0.45rem;
   min-height: 2rem;
   padding: 0.3rem 0.95rem 0.34rem;
-  border: 1px solid var(--pine);
+  border: 1px solid rgba(195, 188, 245, 0.45);
   border-radius: 999px;
   background: transparent;
-  color: var(--pine);
+  color: var(--cloud);
   font-size: 0.92rem;
   line-height: 1;
   text-decoration: none;
@@ -197,9 +212,9 @@ a.lang-btn:hover,
 a.lang-btn:focus-visible,
 .home a[hreflang]:hover,
 .home a[hreflang]:focus-visible {
-  background: var(--pine);
-  border-color: var(--pine);
-  color: var(--paper-top);
+  background: var(--cloud);
+  border-color: var(--cloud);
+  color: var(--night);
 }
 
 article {
@@ -215,6 +230,7 @@ article h2,
 article h3,
 article h4 {
   margin: 2rem 0 0.55rem;
+  color: var(--bright);
   font-weight: 500;
   letter-spacing: -0.02em;
   line-height: 1.25;
@@ -233,8 +249,17 @@ article h4 {
 }
 
 article a {
-  color: var(--link);
+  color: var(--cloud);
+  text-decoration-color: rgba(195, 188, 245, 0.4);
   text-underline-offset: 0.16em;
+}
+
+article a:hover {
+  text-decoration-color: currentColor;
+}
+
+article strong {
+  color: var(--bright);
 }
 
 article ul,
@@ -257,7 +282,8 @@ article li code,
 article h2 code,
 article h3 code,
 article h4 code {
-  background: var(--code);
+  background: var(--panel);
+  color: var(--bright);
   padding: 0.08em 0.34em;
   border-radius: 0.25em;
   font-size: 0.88em;
@@ -268,7 +294,7 @@ article figure.snippet {
   margin: 1.05rem 0 1.25rem;
   border: 1px solid var(--line);
   border-radius: 0.45rem;
-  background: var(--code);
+  background: var(--panel);
   overflow: hidden;
   max-width: 100%;
 }
@@ -277,13 +303,11 @@ article figure.snippet figcaption {
   margin: 0;
   padding: 0.4rem 0.85rem;
   border-bottom: 1px solid var(--line);
-  color: var(--pine);
+  color: var(--cloud);
   font-family: ui-monospace, "Cascadia Code", "SFMono-Regular", Menlo, Consolas, monospace;
-  font-size: 0.74rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: 0.76rem;
+  font-weight: 500;
   line-height: 1.3;
-  text-transform: uppercase;
 }
 
 article pre {
@@ -291,7 +315,8 @@ article pre {
   padding: 0.95rem 1rem;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  background: var(--code);
+  background: var(--panel);
+  color: #d6dcea;
   border: 1px solid var(--line);
   border-radius: 0.4rem;
   font-size: 0.86rem;
@@ -317,8 +342,9 @@ article pre code {
 article blockquote {
   margin: 1.25rem 0;
   padding: 0.05rem 0 0.05rem 1rem;
-  border-left: 3px solid var(--pine);
-  color: var(--link);
+  border-left: 2px solid var(--cloud);
+  color: #d8d3fb;
+  font-style: italic;
 }
 
 article blockquote p {
@@ -363,7 +389,7 @@ article td {
 }
 
 article th {
-  color: var(--pine);
+  color: var(--cloud);
   font-weight: 500;
 }
 
@@ -388,21 +414,22 @@ article figure.shot a {
 }
 
 article figure.shot img {
-  border: 1px solid rgba(27, 25, 20, 0.16);
+  border: 1px solid var(--line);
   border-radius: 0.55rem;
   background: #2b2b2b;
-  box-shadow: 0 1px 2px rgba(27, 25, 20, 0.06), 0 14px 30px -18px rgba(27, 25, 20, 0.55);
-  transition: box-shadow 0.15s ease;
+  box-shadow: 0 22px 44px -26px rgba(0, 0, 0, 0.9);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 article figure.shot a:hover img {
-  box-shadow: 0 0 0 2px var(--pine), 0 14px 30px -18px rgba(27, 25, 20, 0.55);
+  border-color: rgba(195, 188, 245, 0.55);
+  box-shadow: 0 0 0 1px rgba(195, 188, 245, 0.35), 0 22px 44px -26px rgba(0, 0, 0, 0.9);
 }
 
 article figure.shot figcaption {
   max-width: 44rem;
   margin: 0.7rem auto 0;
-  color: var(--muted);
+  color: var(--haze);
   font-size: 0.92rem;
   line-height: 1.45;
 }
@@ -460,9 +487,22 @@ article figure.shot + p.lang {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .avatar,
+  article figure.shot img,
+  a.lang-btn {
+    transition: none;
+  }
+}
+
 @media print {
-  body::before {
-    display: none;
+  :root {
+    --night: #fff;
+    --panel: #f3f3f3;
+    --moon: #111;
+    --bright: #000;
+    --haze: #555;
+    --cloud: #3b2fa8;
   }
 
   body {
@@ -496,7 +536,7 @@ html[dir="rtl"] body {
 [dir="rtl"] article blockquote {
   padding: 0.05rem 1rem 0.05rem 0;
   border-left: 0;
-  border-right: 3px solid var(--pine);
+  border-right: 2px solid var(--cloud);
 }
 
 [dir="rtl"] article th,

@@ -19,6 +19,24 @@ POSTS = ROOT / "posts"
 AUTHOR = "Adel Sadek"
 # Where GitHub Pages serves the site. A domain in domain.txt or CNAME takes over.
 PAGES_URL = "https://anbu-77-x.github.io/adel-sadek/"
+THEME_COLOR = "#0d1120"
+AVATAR = ("assets/avatar.png", 192, 192)
+
+
+def avatar_img(depth: int, alt: str = AUTHOR) -> str:
+    src, width, height = AVATAR
+    path = "../" * depth + src
+    return f'<img class="avatar" src="{path}" alt="{html.escape(alt, quote=True)}" width="{width}" height="{height}">'
+
+
+def icon_links(depth: int) -> str:
+    prefix = "../" * depth
+    return (
+        f'  <link rel="icon" type="image/png" href="{prefix}assets/favicon.png">\n'
+        f'  <link rel="apple-touch-icon" href="{prefix}assets/apple-touch-icon.png">\n'
+    )
+
+
 SHARE_NAMES = ("thumb.jpg", "thumb.jpeg", "thumb.png", "share.jpg", "share.jpeg", "share.png")
 
 HELP = """Usage:
@@ -508,9 +526,10 @@ def page(title: str, body: str, depth: int, head_extra: str = "", description: s
   <meta name="description" content="{html.escape(description)}">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="{CSP}">
-  <meta name="theme-color" content="#0b4f40">
+  <meta name="theme-color" content="{THEME_COLOR}">
+  <meta name="color-scheme" content="dark">
   <link rel="stylesheet" href="{html.escape(css, quote=True)}">
-</head>
+{icon_links(depth)}</head>
 <body>
   <div class="wrap">
 {body}
@@ -545,7 +564,7 @@ def render_index(posts: list[Post]) -> str:
         parts.append("      </ol>\n    </section>")
         listing = "\n".join(parts)
     body = (
-        f'    <header>\n      <h1 class="name"><a href="index.html">{html.escape(AUTHOR)}</a></h1>\n'
+        f'    <header>\n      <h1 class="name"><a href="index.html">{avatar_img(0)}</a></h1>\n'
         f"    </header>\n{listing}"
     )
     tags = social_tags(AUTHOR, f"Writeups by {AUTHOR}.", site_url())
@@ -639,7 +658,7 @@ def render_post(post: Post, planned: list[tuple[Path, Path]]) -> str:
         article = figures(render_blocks(post.body, image_handler(post.slug, planned)))
     except BuildError as exc:
         raise BuildError(f"{post.source.name}: {exc}") from exc
-    home = f'<a href="../../index.html">{html.escape(AUTHOR)}</a>'
+    home = f'<a href="../../index.html">{avatar_img(2)}</a>'
     switch = ""
     if (WRITEUPS / post.slug / "ar.html").is_file():
         switch = '<p class="lang"><a class="lang-btn" href="ar.html" hreflang="ar" lang="ar" dir="rtl">عربي</a></p>'
@@ -684,7 +703,7 @@ def reset_posts() -> None:
 
 def render_missing() -> str:
     body = (
-        f'    <header>\n      <h1 class="name"><a href="index.html">{html.escape(AUTHOR)}</a></h1>\n'
+        f'    <header>\n      <h1 class="name"><a href="index.html">{avatar_img(0)}</a></h1>\n'
         '    </header>\n    <p class="empty">This page is not on the site.</p>'
     )
     return page(AUTHOR, body, 0)
@@ -710,9 +729,13 @@ def audit_html(page_html: str, depth: int) -> None:
     )
     if re.search(r"https?://", head):
         raise BuildError("the page head calls another site")
+    avatar = "../" * depth + AVATAR[0]
     for src in re.findall(r'<img src="([^"]*)"', page_html):
         if ".." in src or ":" in src or not src.startswith("media/"):
             raise BuildError("refusing an image that is not a local picture")
+    for src in re.findall(r'<img class="avatar" src="([^"]*)"', page_html):
+        if src != avatar:
+            raise BuildError("refusing an avatar that is not the site's own picture")
     for href in re.findall(r'<figure class="shot"><a href="([^"]*)"', page_html):
         if ".." in href or ":" in href or not href.startswith("media/"):
             raise BuildError("refusing a picture link that is not a local picture")
@@ -836,7 +859,8 @@ def scan_tree() -> None:
             suffix = path.suffix.lower()
             inside_posts = is_inside(path, POSTS)
             inside_writeups = is_inside(path, WRITEUPS)
-            if kind is None or not (inside_posts or inside_writeups):
+            inside_assets = is_inside(path, ROOT / "assets")
+            if kind is None or not (inside_posts or inside_writeups or inside_assets):
                 raise BuildError(f"remove this file before GitHub: {path.relative_to(ROOT)}")
             if inside_posts and "media" not in path.relative_to(POSTS).parts:
                 raise BuildError(f"remove this file before GitHub: {path.relative_to(ROOT)}")
