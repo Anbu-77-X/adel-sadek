@@ -52,7 +52,7 @@
 <p><strong>Class.</strong> Business logic. The cart update path did not validate the rental period. Severity is high.</p>
 <hr>
 <h3>TL;DR</h3>
-<p>The target is an e-commerce platform with a rental feature. You pick an item, choose a start and an end date, and the backend prices the line by its duration.</p>
+<p>The target is a retail platform with a rental feature. You pick an item, choose a start and an end date, and the backend prices the line by its duration.</p>
 <p>Adding a rental with an end date before its start date is rejected the first time, because the create path validates the period. Adding the same product a second time returns <code>cartUpdateResult: UPDATED</code>. That update path accepts a reversed range and prices the line negative. One poisoned line pulled the rental total to <strong>−€477,673.13</strong>.</p>
 <p>The create path and the update path do not share the same validation. The first write is guarded. The second write is not.</p>
 <hr>

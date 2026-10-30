@@ -15,7 +15,7 @@ date: 2026-10-30
 
 ## TL;DR
 
-The target is an e-commerce platform with a rental feature. You pick an item, choose a start and an end date, and the backend prices the line by its duration.
+The target is a retail platform with a rental feature. You pick an item, choose a start and an end date, and the backend prices the line by its duration.
 
 Adding a rental with an end date before its start date is rejected the first time, because the create path validates the period. Adding the same product a second time returns `cartUpdateResult: UPDATED`. That update path accepts a reversed range and prices the line negative. One poisoned line pulled the rental total to **−€477,673.13**.
 
