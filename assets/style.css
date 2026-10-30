@@ -158,7 +158,37 @@ body::before {
 }
 
 .when {
-  margin: 0 0 2rem;
+  margin: 0 0 1.15rem;
+}
+
+.lang {
+  margin: 0 0 1.7rem;
+}
+
+a.lang-btn,
+.home a[hreflang] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 7.5rem;
+  padding: 0.45rem 1.25rem;
+  border: 1px solid var(--pine);
+  border-radius: 999px;
+  background: var(--pine);
+  color: #f7f1e6;
+  font-size: 1.05rem;
+  line-height: 1;
+  text-decoration: none;
+}
+
+a.lang-btn:hover,
+a.lang-btn:focus-visible,
+.home a[hreflang]:hover,
+.home a[hreflang]:focus-visible {
+  background: var(--link);
+  border-color: var(--link);
+  color: #f7f1e6;
 }
 
 article {

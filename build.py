@@ -519,12 +519,16 @@ def render_post(post: Post, planned: list[tuple[Path, Path]]) -> str:
     except BuildError as exc:
         raise BuildError(f"{post.source.name}: {exc}") from exc
     home = f'<a href="../../index.html">{html.escape(AUTHOR)}</a>'
+    switch = ""
     if (WRITEUPS / post.slug / "ar.html").is_file():
-        home += ' · <a href="ar.html" hreflang="ar" lang="ar" dir="rtl">عربي</a>'
+        switch = (
+            '    <p class="lang"><a class="lang-btn" href="ar.html" hreflang="ar" lang="ar" dir="rtl">العربية</a></p>\n'
+        )
     body = (
         f'    <p class="home">{home}</p>\n'
         f'    <h1 class="post-title" dir="auto">{html.escape(post.title)}</h1>\n'
         f'    <p class="when"><time datetime="{html.escape(post.date)}">{html.escape(post.date)}</time></p>\n'
+        f"{switch}"
         f'    <article dir="auto">\n{article}\n    </article>'
     )
     return page(f"{post.title} — {AUTHOR}", body, 2)
