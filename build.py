@@ -255,13 +255,16 @@ def render_table(header: list[str], rows: list[list[str]], on_image) -> str:
     for row in rows:
         cells = "".join(f"<td>{render_inline(cell, on_image)}</td>" for cell in row)
         body.append(f"<tr>{cells}</tr>")
-    return "<table><thead><tr>" + heads + "</tr></thead><tbody>" + "".join(body) + "</tbody></table>"
+    table = "<table><thead><tr>" + heads + "</tr></thead><tbody>" + "".join(body) + "</tbody></table>"
+    return f'<div class="table-scroll">{table}</div>'
 
 
-def render_code(text: str, lang: str) -> str:
+def render_code(text: str, lang: str, label: str = "") -> str:
     match = re.fullmatch(r"[A-Za-z0-9_+#.-]{1,24}", lang)
     klass = f' class="language-{lang}"' if match else ""
-    return f"<pre><code{klass}>{html.escape(text)}</code></pre>"
+    code = f'<pre dir="ltr"><code{klass}>{html.escape(text)}</code></pre>'
+    caption = f"<figcaption>{html.escape(label)}</figcaption>" if label else ""
+    return f'<figure class="snippet">{caption}{code}</figure>'
 
 
 def render_blocks(markdown: str, on_image) -> str:
@@ -274,7 +277,8 @@ def render_blocks(markdown: str, on_image) -> str:
             index += 1
             continue
         if line.startswith("```"):
-            lang = line[3:].strip().split()[0] if line[3:].strip() else ""
+            info = line[3:].strip()
+            lang, _, label = info.partition(" ")
             index += 1
             buf: list[str] = []
             while index < len(lines) and not lines[index].startswith("```"):
@@ -282,7 +286,7 @@ def render_blocks(markdown: str, on_image) -> str:
                 index += 1
             if index < len(lines):
                 index += 1
-            blocks.append(render_code("\n".join(buf), lang))
+            blocks.append(render_code("\n".join(buf), lang, label.strip()))
             continue
         heading = re.match(r"^(#{1,3}) ", line)
         if heading:
@@ -513,6 +517,17 @@ def image_handler(slug: str, planned: list[tuple[Path, Path]]):
     return on_image
 
 
+def insert_after_banner(article: str, switch: str) -> str:
+    if not switch:
+        return article
+    lines = article.split("\n")
+    for index, line in enumerate(lines):
+        if "<img " in line:
+            lines.insert(index + 1, switch)
+            return "\n".join(lines)
+    return switch + "\n" + article
+
+
 def render_post(post: Post, planned: list[tuple[Path, Path]]) -> str:
     try:
         article = render_blocks(post.body, image_handler(post.slug, planned))
@@ -521,14 +536,12 @@ def render_post(post: Post, planned: list[tuple[Path, Path]]) -> str:
     home = f'<a href="../../index.html">{html.escape(AUTHOR)}</a>'
     switch = ""
     if (WRITEUPS / post.slug / "ar.html").is_file():
-        switch = (
-            '    <p class="lang"><a class="lang-btn" href="ar.html" hreflang="ar" lang="ar" dir="rtl">العربية</a></p>\n'
-        )
+        switch = '<p class="lang"><a class="lang-btn" href="ar.html" hreflang="ar" lang="ar" dir="rtl">العربية</a></p>'
+        article = insert_after_banner(article, switch)
     body = (
         f'    <p class="home">{home}</p>\n'
         f'    <h1 class="post-title" dir="auto">{html.escape(post.title)}</h1>\n'
         f'    <p class="when"><time datetime="{html.escape(post.date)}">{html.escape(post.date)}</time></p>\n'
-        f"{switch}"
         f'    <article dir="auto">\n{article}\n    </article>'
     )
     return page(f"{post.title} — {AUTHOR}", body, 2)
@@ -737,7 +750,11 @@ def self_check() -> None:
     assert "<ul><li>a</li><li>b</li></ul>" in body
     table = render_blocks("| A | B |\n| --- | --- |\n| 1 | <b> |\n", on_image)
     assert "<table>" in table and "<td>&lt;b&gt;</td>" in table
-    assert '<pre><code class="language-js">&lt;s&gt;</code></pre>' in body
+    assert '<figure class="snippet"><pre dir="ltr"><code class="language-js">&lt;s&gt;</code></pre></figure>' in body
+    labeled = render_blocks("```json Payload\n{\"a\":1}\n```\n", on_image)
+    assert "<figcaption>Payload</figcaption>" in labeled
+    assert 'class="language-json"' in labeled
+    assert "&quot;a&quot;" in labeled
     assert find_secret("ordinary notes") is None
     assert find_secret("-----BEGIN " + "PRIVATE KEY-----") == "private key"
     assert find_secret("gh" + "p_" + ("a" * 20)) == "git hosting token"

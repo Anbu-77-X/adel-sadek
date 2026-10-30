@@ -8,17 +8,18 @@
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; img-src 'self'; base-uri 'none'; form-action 'none'; script-src 'none'; object-src 'none'; frame-src 'none'; connect-src 'none'; manifest-src 'none'; media-src 'none'; worker-src 'none'">
   <meta name="theme-color" content="#0b4f40">
-  <title>الكارت اللي إجماليه طلع بالسالب — عادل صادق</title>
+  <title>اجمالي الكارت بقي سالب — عادل صادق</title>
   <link rel="stylesheet" href="../../assets/style.css">
   <link rel="alternate" hreflang="en" href="index.html">
 </head>
 <body>
   <div class="wrap">
-    <p class="home"><a href="../../index.html">عادل صادق</a> · <a class="lang-btn" href="index.html" hreflang="en" lang="en" dir="ltr">English</a></p>
+    <p class="home"><a href="../../index.html">عادل صادق</a></p>
     <h1 class="post-title">اجمالي الكارت بقي سالب</h1>
     <p class="when"><time datetime="2026-10-30" dir="ltr">2026-10-30</time></p>
     <article>
 <p><img src="media/negative-cart-totals/hero.png" alt="كارت إيجار متسحب لحد ما إجماليه بقى بالسالب"></p>
+<p class="lang"><a class="lang-btn" href="index.html" hreflang="en" lang="en" dir="ltr">English</a></p>
 <blockquote><p>إني عكست التواريخ في تاني ريكويست وانا بضيف منتج، خلّى كارت تنزل لـ <bdi dir="ltr">−€477,673.13</bdi>.</p></blockquote>
 <p><strong>الحالة.</strong> بلّغت عنها، واتصلحت، واتقفلت كـ duplicate. حد كان سابقني ليها. بس طريقة التفكير لسه تستاهل تتكتب.</p>
 <p><strong>النوع.</strong> Business logic. المسار اللي بيحدّث الكارت مكانش بيعمل validation على فترة الإيجار. الخطورة medium: محتاجة أكونت عامل تسجيل دخول، وسلوك الـcheckout متجربش.</p>
@@ -40,7 +41,15 @@
 <h3>1. بفهم الخاصية الأول</h3>
 <p><strong>وصلت هنا إزاي.</strong> فتحت منتج ينفع يتأجر، وفضلت باصص على الـnetwork tab وأنا بغيّر تواريخ الإيجار.</p>
 <p>تواريخ الإيجار مش ديكور. هي ماشية مع سطر الكارت، وهي اللي بتحدد السعر اللي السيرفر بيحسبه.</p>
-<ul><li>الـrequest بتاع الإضافة للكارت: <code dir="ltr">POST /api/rental</code></li><li>شكل الـpayload: <code dir="ltr">{&quot;productCode&quot;:&quot;018517&quot;,&quot;storeId&quot;:39,&quot;startDate&quot;:[2026,10,31,17,0,0],&quot;endDate&quot;:[2026,11,20,17,0,0],&quot;quantity&quot;:1}</code></li><li>رد الكارت: كل سطر معاه سعر السيرفر هو اللي حاسبه.</li></ul>
+<figure class="snippet"><figcaption>Endpoint</figcaption><pre dir="ltr"><code class="language-http">POST /api/rental</code></pre></figure>
+<figure class="snippet"><figcaption>Payload</figcaption><pre dir="ltr"><code class="language-json">{
+  "productCode": "018517",
+  "storeId": 39,
+  "startDate": [2026, 10, 31, 17, 0, 0],
+  "endDate": [2026, 11, 20, 17, 0, 0],
+  "quantity": 1
+}</code></pre></figure>
+<p>رد الكارت: كل سطر معاه سعر السيرفر هو اللي حاسبه.</p>
 <p><img src="media/negative-cart-totals/rental-request.png" alt="الـrequest بتاع الإيجار جنب تحديث الكارت"></p>
 <p><em>التواريخ ماشية مع السطر. والإضافة دي اترد عليها كـ update.</em></p>
 <p><strong>شُفته بعيني.</strong> الإيجار العادي بيتسعّر صح وبالموجب. في الكابتشر اللي تحت: <bdi dir="ltr">€20</bdi> إيجار، <bdi dir="ltr">€2</bdi> waiver، <bdi dir="ltr">€22</bdi> إجمالي، و<bdi dir="ltr">€50</bdi> تأمين (deposit). السيرفر هو اللي ماسك السعر.</p>
@@ -51,7 +60,19 @@
 <h3>2. بدوّر على حدود فترة الحجز</h3>
 <p><strong>وصلت هنا إزاي.</strong> قبل ما أجرب أي حركة ذكية، جسّيت الحدود الأول. فضلت أبعّد التواريخ في المستقبل لحد ما السيرفر قال لأ.</p>
 <p><strong>شُفته بعيني.</strong> فترة برة الـwindow اترفضت. الترتيب كان صح، البداية قبل النهاية، بس النهاية كانت بعيدة أوي في المستقبل.</p>
-<ul><li>الـRequest: <code dir="ltr">{&quot;productCode&quot;:&quot;018517&quot;,&quot;storeId&quot;:39,&quot;startDate&quot;:[2030,10,31,17,0,0],&quot;endDate&quot;:[2031,11,20,17,0,0],&quot;quantity&quot;:1}</code></li><li>الـResponse: <code dir="ltr">{&quot;success&quot;:false,&quot;errorCode&quot;:&quot;RENTAL_PERIOD_INVALID&quot;,&quot;cartUpdateResult&quot;:&quot;NOT_UPDATED&quot;,&quot;validationErrors&quot;:[]}</code></li></ul>
+<figure class="snippet"><figcaption>Request</figcaption><pre dir="ltr"><code class="language-json">{
+  "productCode": "018517",
+  "storeId": 39,
+  "startDate": [2030, 10, 31, 17, 0, 0],
+  "endDate": [2031, 11, 20, 17, 0, 0],
+  "quantity": 1
+}</code></pre></figure>
+<figure class="snippet"><figcaption>Response</figcaption><pre dir="ltr"><code class="language-json">{
+  "success": false,
+  "errorCode": "RENTAL_PERIOD_INVALID",
+  "cartUpdateResult": "NOT_UPDATED",
+  "validationErrors": []
+}</code></pre></figure>
 <p><img src="media/negative-cart-totals/window-request.png" alt="التواريخ البعيدة في الـrequest بتاع الإيجار"></p>
 <p><em>التواريخ مترتبة صح.</em></p>
 <p><img src="media/negative-cart-totals/window-response.png" alt="السيرفر رافض الفترة دي"></p>
@@ -68,27 +89,33 @@
 <p>ده قلب الموضوع.</p>
 <p><strong>وصلت هنا إزاي.</strong> ضفت منتج، وبعدين ضفت نفس المنتج تاني، وبصيت الـAPI سمّى النتيجة إيه.</p>
 <p><strong>شُفته بعيني.</strong> الإضافة التانية رجعت كـ update، مش سطر جديد.</p>
-<ul><li>الـResponse: <code dir="ltr">{&quot;success&quot;:true,&quot;cartUpdateResult&quot;:&quot;UPDATED&quot;,&quot;validationErrors&quot;:[],&quot;cart&quot;:{ … }}</code></li><li>سطر الإيجار اللي طلع مكانش شايل التواريخ اللي لسه باعتها. الكارت بيعرف سطر الإيجار من المنتج، مش من التواريخ اللي في الـrequest.</li></ul>
+<figure class="snippet"><figcaption>Response</figcaption><pre dir="ltr"><code class="language-json">{
+  "success": true,
+  "cartUpdateResult": "UPDATED",
+  "validationErrors": [],
+  "cart": { … }
+}</code></pre></figure>
+<ul><li>سطر الإيجار اللي طلع مكانش شايل التواريخ اللي لسه باعتها. الكارت بيعرف سطر الإيجار من المنتج، مش من التواريخ اللي في الـrequest.</li></ul>
 <p>أكشن واحد، "ضيف المنتج ده"، بيتحول لسلوكين مختلفين على السيرفر.</p>
 <ul><li><strong>أول إضافة، مسار الإنشاء.</strong> السطر لسه مش موجود. السيرفر بيعمله، وبيشغّل الـvalidation بتاع الفترة اللي في الجزء 2، وبيسعّره. السعر موجب.</li><li><strong>تاني إضافة، مسار التحديث.</strong> السطر موجود أصلاً ومتعرّف بالمنتج. السيرفر بيحدّثه بالتواريخ الجديدة. وهنا الـrange المعكوس عدّى وسعر السطر بقى بالسالب.</li></ul>
 <p><strong>تخمين.</strong> مسار التحديث بيقرا تاريخ البداية والنهاية من جديد، بس مش بيعيد تشغيل الـvalidation بتاع الفترة اللي مسار الإنشاء بيشغّله، أو بيشغّل نسخة أضعف منه. والأدلة راكبة على بعض: فيه validation على الإنشاء، والإضافة التانية راجعة <code dir="ltr">UPDATED</code> بصريح العبارة، والكارت في الآخر شايل سطر بالسالب.</p>
 <p>الإضافة التانية كانت بـrange معكوس بحوالي سنة، فالمدة بتطلع بالسالب جامد:</p>
-<pre dir="ltr"><code class="language-json">{
+<figure class="snippet"><figcaption>Payload</figcaption><pre dir="ltr"><code class="language-json">{
   &quot;productCode&quot;: &quot;018517&quot;,
   &quot;storeId&quot;: 39,
   &quot;startDate&quot;: [2031, 10, 31, 11, 0, 0],
   &quot;endDate&quot;: [2030, 10, 31, 10, 0, 0],
   &quot;quantity&quot;: 100
-}</code></pre>
+}</code></pre></figure>
 <p>الخلاصة: مسارين كود لأكشن واحد، وواحد بس فيهم اللي محمي. دي حاجة تستاهل تدوّر عليها في أي كارت أو wishlist أو flow حجز.</p>
 <hr>
 <h3>5. ليه السعر بيطلع بالسالب</h3>
 <p><strong>تخمين. للتوضيح بس، مش متجمّع من الكود.</strong> دالة تسعير شكلها كدا هتطلّع نفس اللي أنا شفته:</p>
-<pre dir="ltr"><code class="language-text">function price(item, start, end):
+<figure class="snippet"><figcaption>Pricing</figcaption><pre dir="ltr"><code class="language-text">function price(item, start, end):
     hours = (end - start) / 3600
     if hours &lt; 24:
         return ceil(hours) * item.hourlyRate
-    return ceil(hours / 24) * item.dailyRate</code></pre>
+    return ceil(hours / 24) * item.dailyRate</code></pre></figure>
 <p>مع range معكوس، <code dir="ltr">hours</code> بتطلع بالسالب. وأي رقم سالب أصغر من 24، فبيدخل في فرع الساعات والنتيجة سعر سطر بالسالب. مفيش check زي <code dir="ltr">hours &gt; 0</code>. التخمين إن المطوّر افترض إن الـvalidation ضمن قبل كدا إن المدة موجبة. على مسار الإنشاء، فعلاً كان ضامنها. على مسار التحديث، لأ.</p>
 <p><strong>سؤال لسه مفتوح.</strong> مش قادر أوفّق الرقم الكبير ده مع الحالة العادية بشكل كامل. الإضافة التانية كان فيها <code dir="ltr">quantity: 100</code>، فجزء من الرقم الضخم ده هو سعر السطر مضروب في 100 وحدة. وحتى لو حسبت حساب ده، إيجار عادي بحوالي <bdi dir="ltr">€20</bdi> وسطر معكوس بـ <bdi dir="ltr">−€434,880</bdi> مش راكبين على نفس سعر اليوم بشكل نضيف. المعادلة بالظبط، ومدة الـrange المعكوس بالظبط، لسه مش متأكد منهم. الإشارة والاتجاه أكيدين، إنما الحسبة بالتفصيل لسه مفتوحة.</p>
 <p>والدرس فاضل صح في الحالتين. الـvalidation والتسعير كانوا منطقتين ثقة منفصلين، ومسار التحديث خلاني أنط فوق الأولى.</p>
@@ -96,7 +123,7 @@
 <h3>6. الكارت المسموم</h3>
 <p><strong>وصلت هنا إزاي.</strong> الكارت في الآخر مجموع. أول ما سطر واحد يبقى بالسالب، بيسحب الإجمالي لتحت وبيلغي قصاده أي سطر موجب.</p>
 <p><strong>شُفته بعيني</strong>، من الـresponse بتاع الكارت على طول:</p>
-<table><thead><tr><th>الحقل</th><th>القيمة</th></tr></thead><tbody><tr><td><code dir="ltr">rentalPrice</code> بتاع السطر المسموم</td><td><bdi dir="ltr">−€434,880.00</bdi></td></tr><tr><td><code dir="ltr">damageWaiverPrice</code> بتاع السطر المسموم (10%)</td><td><bdi dir="ltr">−€43,488.00</bdi></td></tr><tr><td><code dir="ltr">totalPrice</code> بتاع السطر المسموم</td><td><bdi dir="ltr">−€478,368.00</bdi></td></tr><tr><td><code dir="ltr">totalRentalRentPrice</code> بتاع الكارت</td><td><bdi dir="ltr">−€434,248.30</bdi></td></tr><tr><td><code dir="ltr">totalDamageWaiverPrice</code> بتاع الكارت</td><td><bdi dir="ltr">−€43,424.83</bdi></td></tr><tr><td><code dir="ltr">totalRentalPrice</code> بتاع الكارت</td><td><bdi dir="ltr">−€477,673.13</bdi></td></tr></tbody></table>
+<div class="table-scroll"><table><thead><tr><th>الحقل</th><th>القيمة</th></tr></thead><tbody><tr><td><code dir="ltr">rentalPrice</code> بتاع السطر المسموم</td><td><bdi dir="ltr">−€434,880.00</bdi></td></tr><tr><td><code dir="ltr">damageWaiverPrice</code> بتاع السطر المسموم (10%)</td><td><bdi dir="ltr">−€43,488.00</bdi></td></tr><tr><td><code dir="ltr">totalPrice</code> بتاع السطر المسموم</td><td><bdi dir="ltr">−€478,368.00</bdi></td></tr><tr><td><code dir="ltr">totalRentalRentPrice</code> بتاع الكارت</td><td><bdi dir="ltr">−€434,248.30</bdi></td></tr><tr><td><code dir="ltr">totalDamageWaiverPrice</code> بتاع الكارت</td><td><bdi dir="ltr">−€43,424.83</bdi></td></tr><tr><td><code dir="ltr">totalRentalPrice</code> بتاع الكارت</td><td><bdi dir="ltr">−€477,673.13</bdi></td></tr></tbody></table></div>
 <p>إجمالي الإيجار <bdi dir="ltr">−€434,248.30</bdi> معناه إن فيه سطر موجب بحوالي <bdi dir="ltr">+€631.70</bdi> السطر السالب بلعه. والإجمالي النهائي هو الرقم ده زائد الـdamage waiver بتاع الـ10%.</p>
 <p><img src="media/negative-cart-totals/negative-total.png" alt="إجمالي الكارت بعد الإيجار المعكوس"></p>
 <p><em>ده الـresponse نفسه. الأرقام دي state متخزنة على السيرفر.</em></p>
@@ -112,7 +139,7 @@
 <ul><li>هل الإجمالي السالب بتاع الإيجار بيتجمع أصلاً مع المنتجات العادية في grand total واحد.</li><li>الـcheckout وخطوة الدفع بيعملوا إيه فعلاً مع إجمالي صفر أو سالب.</li><li>هل range معكوس في نفس اليوم بيعدّي على مسار الإنشاء.</li><li>معادلة التسعير الحقيقية، والمدة المعكوسة والكمية بالظبط اللي ورا سطر الـ<bdi dir="ltr">−€434,880</bdi>.</li><li>كابتشر نضيف للـresponse بتاع الإنشاء والـresponse بتاع التحديث جنب بعض لنفس الـrange المعكوس.</li></ul>
 <hr>
 <h3>المسارين ماشيين إزاي</h3>
-<pre dir="ltr"><code class="language-text">POST /api/rental
+<figure class="snippet"><figcaption>Paths</figcaption><pre dir="ltr"><code class="language-text">POST /api/rental
         |
         +-- no line yet ---- create
         |                      |
@@ -125,7 +152,7 @@
                                          |
                                          +-- negative line
                                                |
-                                               +-- poisoned cart total</code></pre>
+                                               +-- poisoned cart total</code></pre></figure>
 <p>بالعربي: لو السطر لسه مش موجود، بيروح على <strong>create</strong>، والفترة يا إما تترفض بـ <code dir="ltr">RENTAL_PERIOD_INVALID</code> يا إما تتقبل بسعر موجب. لو السطر موجود، بيروح على <strong>update</strong>، والتواريخ المعكوسة بتعدّي، فيطلع سطر بالسالب، وإجمالي الكارت كله يتسمم.</p>
 <hr>
 <h3>السبب الأساسي، على حسب فهمي</h3>

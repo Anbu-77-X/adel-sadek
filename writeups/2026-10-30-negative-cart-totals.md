@@ -51,9 +51,21 @@ I stopped at the cart. I never attempted checkout with a negative or zero total,
 
 The rental dates are not decoration. They ride on the cart line and drive the server-computed price.
 
-- Add-to-cart request: `POST /api/rental`
-- Payload shape: `{"productCode":"018517","storeId":39,"startDate":[2026,10,31,17,0,0],"endDate":[2026,11,20,17,0,0],"quantity":1}`
-- Cart response: each line carries a server-computed price.
+```http Endpoint
+POST /api/rental
+```
+
+```json Payload
+{
+  "productCode": "018517",
+  "storeId": 39,
+  "startDate": [2026, 10, 31, 17, 0, 0],
+  "endDate": [2026, 11, 20, 17, 0, 0],
+  "quantity": 1
+}
+```
+
+The cart response gives each line a server-computed price.
 
 ![The rental request beside a cart update](negative-cart-totals/rental-request.png)
 
@@ -75,8 +87,24 @@ That is the right design, and it also means the pricing function is the single p
 
 **Observed.** An out-of-window period was rejected. The range was in the right order, start before end, but the end was too far in the future.
 
-- Request: `{"productCode":"018517","storeId":39,"startDate":[2030,10,31,17,0,0],"endDate":[2031,11,20,17,0,0],"quantity":1}`
-- Response: `{"success":false,"errorCode":"RENTAL_PERIOD_INVALID","cartUpdateResult":"NOT_UPDATED","validationErrors":[]}`
+```json Request
+{
+  "productCode": "018517",
+  "storeId": 39,
+  "startDate": [2030, 10, 31, 17, 0, 0],
+  "endDate": [2031, 11, 20, 17, 0, 0],
+  "quantity": 1
+}
+```
+
+```json Response
+{
+  "success": false,
+  "errorCode": "RENTAL_PERIOD_INVALID",
+  "cartUpdateResult": "NOT_UPDATED",
+  "validationErrors": []
+}
+```
 
 ![The far-future dates on the rental request](negative-cart-totals/window-request.png)
 
@@ -112,8 +140,16 @@ This is the heart of it.
 
 **Observed.** The second add came back as an update, not a new line.
 
-- Response: `{"success":true,"cartUpdateResult":"UPDATED","validationErrors":[],"cart":{ … }}`
-- The resulting rental line did not carry the dates I had just sent. The cart identifies a rental line by product, not by the dates on the request.
+```json Response
+{
+  "success": true,
+  "cartUpdateResult": "UPDATED",
+  "validationErrors": [],
+  "cart": { … }
+}
+```
+
+The resulting rental line did not carry the dates I had just sent. The cart identifies a rental line by product, not by the dates on the request.
 
 One action, "add this item," resolves to two server behaviors.
 
@@ -124,7 +160,7 @@ One action, "add this item," resolves to two server behaviors.
 
 The second add used a range reversed by about a year, so the duration goes strongly negative:
 
-```json
+```json Payload
 {
   "productCode": "018517",
   "storeId": 39,
@@ -142,7 +178,7 @@ The takeaway: two code paths for one action, and only one of them is guarded. Wo
 
 **Hypothesis. Illustrative only, not reconstructed from code.** A pricing function shaped like this would reproduce what I saw:
 
-```text
+```text Pricing
 function price(item, start, end):
     hours = (end - start) / 3600
     if hours < 24:
@@ -210,7 +246,7 @@ The processor is a calculator you hand a number to. The number has to be correct
 
 ## How the two paths line up
 
-```text
+```text Paths
 POST /api/rental
         |
         +-- no line yet ---- create
