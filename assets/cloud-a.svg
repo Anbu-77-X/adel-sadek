@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 130" width="520" height="130">
+<defs>
+<linearGradient id="g" gradientUnits="userSpaceOnUse" x1="0" y1="26" x2="0" y2="116">
+<stop offset="0" stop-color="#d4d0f7"/>
+<stop offset="0.737" stop-color="#9c9bdc"/>
+<stop offset="0.747" stop-color="#7377bd"/>
+<stop offset="1" stop-color="#5e62a7"/>
+</linearGradient>
+<filter id="o" x="-5%" y="-15%" width="110%" height="130%">
+<feMorphology in="SourceAlpha" operator="dilate" radius="1.6" result="d"/>
+<feFlood flood-color="#1a2150"/><feComposite in2="d" operator="in" result="line"/>
+<feMerge><feMergeNode in="line"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter>
+</defs>
+<g><g filter="url(#o)" fill="url(#g)"><ellipse cx="150" cy="92" rx="44" ry="22"/><ellipse cx="205" cy="72" rx="54" ry="32"/><ellipse cx="272" cy="64" rx="60" ry="38"/><ellipse cx="338" cy="80" rx="48" ry="28"/><ellipse cx="392" cy="96" rx="36" ry="18"/><rect x="100" y="92" width="330" height="24" rx="12.0"/><path d="M 112 100 C 74 104 34 108 4 110 C 38 114 80 115 118 114 Z"/><path d="M 418 104 C 448 107 482 111 516 114 C 482 117 448 117 414 116 Z"/></g><path d="M 238 98 q 16 -14 34 -4" fill="none" stroke="#4f5597" stroke-width="2" stroke-linecap="round" opacity="0.7"/><path d="M 318 104 q 12 -10 26 -2" fill="none" stroke="#4f5597" stroke-width="2" stroke-linecap="round" opacity="0.7"/></g>
+</svg>

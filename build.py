@@ -21,7 +21,17 @@ AUTHOR = "Adel Sadek"
 # Where GitHub Pages serves the site. A domain in domain.txt or CNAME takes over.
 PAGES_URL = "https://anbu-77-x.github.io/adel-sadek/"
 THEME_COLOR = "#0d1120"
-AVATAR = ("assets/avatar.png", 192, 192)
+AVATAR = ("assets/avatar.webp", 560, 560)
+# Night sky behind every page: drifting clouds and a few stars. Pure CSS and SVG, no script.
+SKY = (
+    '  <div class="sky" aria-hidden="true">\n'
+    '    <span class="stars"></span>\n'
+    '    <span class="cloud cloud-1"></span>\n'
+    '    <span class="cloud cloud-2"></span>\n'
+    '    <span class="cloud cloud-3"></span>\n'
+    '    <span class="cloud cloud-4"></span>\n'
+    '  </div>\n'
+)
 
 
 def asset_version() -> str:
@@ -34,7 +44,7 @@ def avatar_img(depth: int, alt: str = AUTHOR) -> str:
     src = AVATAR[0]
     path = "../" * depth + src
     # The size written here holds even before the stylesheet loads.
-    size = 48 if depth == 0 else 30
+    size = 160 if depth == 0 else 36
     return f'<img class="avatar" src="{path}" alt="{html.escape(alt, quote=True)}" width="{size}" height="{size}">'
 
 
@@ -85,7 +95,7 @@ TEXT_SUFFIXES = {".py", ".md", ".html", ".css", ".txt", ".gitignore"}
 SKIP_DIRS = {".git", "__pycache__"}
 CSP = (
     "default-src 'none'; style-src 'self'; img-src 'self'; "
-    "base-uri 'none'; form-action 'none'; script-src 'none'; "
+    "font-src 'self'; base-uri 'none'; form-action 'none'; script-src 'none'; "
     "object-src 'none'; frame-src 'none'; connect-src 'none'; "
     "manifest-src 'none'; media-src 'none'; worker-src 'none'"
 )
@@ -521,7 +531,7 @@ def image_size(path: Path) -> tuple[int, int] | None:
     return None
 
 
-def page(title: str, body: str, depth: int, head_extra: str = "", description: str = "") -> str:
+def page(title: str, body: str, depth: int, head_extra: str = "", description: str = "", kind: str = "page-home") -> str:
     prefix = "../" * depth
     css = f"{prefix}assets/style.css?v={asset_version()}"
     description = description or f"Writeups by {AUTHOR}."
@@ -539,8 +549,8 @@ def page(title: str, body: str, depth: int, head_extra: str = "", description: s
   <meta name="color-scheme" content="dark">
   <link rel="stylesheet" href="{html.escape(css, quote=True)}">
 {icon_links(depth)}</head>
-<body>
-  <div class="wrap">
+<body class="{kind}">
+{SKY}  <div class="wrap">
 {body}
   </div>
 </body>
@@ -564,10 +574,13 @@ def render_index(posts: list[Post]) -> str:
                     f'    <section class="year-block">\n      <h2 class="year">{html.escape(year)}</h2>\n      <ol class="index">'
                 )
             href = f"posts/{post.slug}/index.html"
+            summary = post.description or first_quote(post.body)
+            line = f'          <p class="summary" dir="auto">{html.escape(summary)}</p>\n' if summary else ""
             parts.append(
                 "        <li>\n"
                 f'          <time datetime="{html.escape(post.date)}">{html.escape(post.date)}</time>\n'
                 f'          <a dir="auto" href="{html.escape(href, quote=True)}">{html.escape(post.title)}</a>\n'
+                f"{line}"
                 "        </li>"
             )
         parts.append("      </ol>\n    </section>")
@@ -692,7 +705,7 @@ def render_post(post: Post, planned: list[tuple[Path, Path]]) -> str:
         f'    <p class="when"><time datetime="{html.escape(post.date)}">{html.escape(post.date)}</time></p>\n'
         f'    <article dir="auto">\n{article}\n    </article>'
     )
-    return page(f"{post.title} — {AUTHOR}", body, 2, tags, description)
+    return page(f"{post.title} — {AUTHOR}", body, 2, tags, description, kind="page-post")
 
 
 def reset_posts() -> None:
@@ -799,6 +812,14 @@ def build_site() -> int:
                 f'href="../../assets/style.css?v={asset_version()}"',
                 ar_html,
             )
+            ar_html = re.sub(
+                r'(<meta http-equiv="Content-Security-Policy" content=")[^"]*(">)',
+                lambda m: m.group(1) + CSP + m.group(2),
+                ar_html,
+                count=1,
+            )
+            if '<div class="sky"' not in ar_html:
+                ar_html = re.sub(r"<body[^>]*>\n", '<body class="page-post">\n' + SKY, ar_html, count=1)
             try:
                 audit_html(ar_html, 2)
             except BuildError as exc:
@@ -867,6 +888,15 @@ def scan_tree() -> None:
             raise BuildError(f"refusing to scan outside the project: {path}")
         if path.name.lower() in SECRET_NAMES or path.suffix.lower() in SECRET_SUFFIXES:
             raise BuildError(f"remove this file before GitHub: {path.relative_to(ROOT)}")
+        if is_inside(path, ROOT / "assets") and path.suffix.lower() == ".woff2":
+            if not path.read_bytes().startswith(b"wOF2"):
+                raise BuildError(f"font content does not match its name: {path.relative_to(ROOT)}")
+            continue
+        if is_inside(path, ROOT / "assets") and path.suffix.lower() == ".svg":
+            text = path.read_text(encoding="utf-8")
+            if re.search(r"(?i)<\s*(script|foreignobject|iframe|a)\b|\bon[a-z]+\s*=|href\s*=|url\(\s*['\"]?(?!#)", text):
+                raise BuildError(f"svg holds something active: {path.relative_to(ROOT)}")
+            continue
         if path.suffix.lower() in ALLOWED_IMAGES:
             data = path.read_bytes()
             kind = image_kind(data)
