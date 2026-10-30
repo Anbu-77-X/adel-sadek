@@ -227,10 +227,35 @@ def is_special(line: str) -> bool:
         return True
     if line.startswith("- ") or line.startswith("* "):
         return True
+    if line.lstrip().startswith("|"):
+        return True
     if re.match(r"\d+\. ", line):
         return True
     stripped = line.strip()
     return bool(re.fullmatch(r"-{3,}|\*{3,}", stripped))
+
+
+def split_cells(line: str) -> list[str]:
+    text = line.strip()
+    if text.startswith("|"):
+        text = text[1:]
+    if text.endswith("|"):
+        text = text[:-1]
+    return [cell.strip() for cell in text.split("|")]
+
+
+def is_rule_row(line: str) -> bool:
+    cells = split_cells(line)
+    return bool(cells) and all(re.fullmatch(r":?-{3,}:?", cell) for cell in cells)
+
+
+def render_table(header: list[str], rows: list[list[str]], on_image) -> str:
+    heads = "".join(f"<th>{render_inline(cell, on_image)}</th>" for cell in header)
+    body = []
+    for row in rows:
+        cells = "".join(f"<td>{render_inline(cell, on_image)}</td>" for cell in row)
+        body.append(f"<tr>{cells}</tr>")
+    return "<table><thead><tr>" + heads + "</tr></thead><tbody>" + "".join(body) + "</tbody></table>"
 
 
 def render_code(text: str, lang: str) -> str:
@@ -290,6 +315,15 @@ def render_blocks(markdown: str, on_image) -> str:
                 index += 1
             lis = "".join(f"<li>{item}</li>" for item in items)
             blocks.append(f"<ul>{lis}</ul>")
+            continue
+        if line.lstrip().startswith("|") and index + 1 < len(lines) and is_rule_row(lines[index + 1]):
+            header = split_cells(line)
+            index += 2
+            rows = []
+            while index < len(lines) and lines[index].lstrip().startswith("|"):
+                rows.append(split_cells(lines[index]))
+                index += 1
+            blocks.append(render_table(header, rows, on_image))
             continue
         if re.match(r"\d+\. ", line):
             items = []
@@ -682,6 +716,8 @@ def self_check() -> None:
     body = render_blocks("## Title\n\nHello\n\n- a\n- b\n\n```js\n<s>\n```\n", on_image)
     assert "<h3>Title</h3>" in body
     assert "<ul><li>a</li><li>b</li></ul>" in body
+    table = render_blocks("| A | B |\n| --- | --- |\n| 1 | <b> |\n", on_image)
+    assert "<table>" in table and "<td>&lt;b&gt;</td>" in table
     assert '<pre><code class="language-js">&lt;s&gt;</code></pre>' in body
     assert find_secret("ordinary notes") is None
     assert find_secret("-----BEGIN " + "PRIVATE KEY-----") == "private key"
