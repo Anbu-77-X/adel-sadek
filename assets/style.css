@@ -373,7 +373,7 @@ article img {
   height: auto;
 }
 
-/* Screenshots: wider than the text on big screens, open full size on click. */
+/* Screenshots: as wide as the text, open full size on click. */
 article figure.shot {
   margin: 1.75rem 0 1.9rem;
 }
@@ -415,13 +415,6 @@ article figure.shot + p.lang {
   margin-top: -0.6rem;
 }
 
-@media (min-width: 62rem) {
-  article figure.shot {
-    --shot: min(70rem, calc(100vw - 4rem));
-    width: var(--shot);
-    margin-inline: calc((100% - var(--shot)) / 2);
-  }
-}
 
 @media (max-width: 700px) {
   body {

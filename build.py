@@ -19,7 +19,7 @@ POSTS = ROOT / "posts"
 AUTHOR = "Adel Sadek"
 # Where GitHub Pages serves the site. A domain in domain.txt or CNAME takes over.
 PAGES_URL = "https://anbu-77-x.github.io/adel-sadek/"
-SHARE_NAMES = ("share.jpg", "share.jpeg", "share.png", "share.webp")
+SHARE_NAMES = ("thumb.jpg", "thumb.jpeg", "thumb.png", "share.jpg", "share.jpeg", "share.png")
 
 HELP = """Usage:
   python3 build.py                 build the site
@@ -458,12 +458,16 @@ def social_tags(title: str, description: str, url: str, image: str = "", alt: st
     out += tag("property", "og:description", description)
     out += tag("property", "og:url", url)
     if image:
+        kind_of = "image/png" if image.lower().endswith(".png") else "image/jpeg"
         out += tag("property", "og:image", image)
+        out += tag("property", "og:image:secure_url", image)
+        out += tag("property", "og:image:type", kind_of)
         out += tag("property", "og:image:alt", alt or title)
         if size:
             out += tag("property", "og:image:width", str(size[0]))
             out += tag("property", "og:image:height", str(size[1]))
-    out += tag("name", "twitter:card", "summary_large_image" if image else "summary")
+    wide = bool(image and size and size[0] >= 1.5 * size[1])
+    out += tag("name", "twitter:card", "summary_large_image" if wide else "summary")
     out += tag("name", "twitter:title", title)
     out += tag("name", "twitter:description", description)
     if image:
@@ -499,14 +503,14 @@ def page(title: str, body: str, depth: int, head_extra: str = "", description: s
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="author" content="{html.escape(AUTHOR)}">
+  <title>{html.escape(title)}</title>
+{head_extra}  <meta name="author" content="{html.escape(AUTHOR)}">
   <meta name="description" content="{html.escape(description)}">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="{CSP}">
   <meta name="theme-color" content="#0b4f40">
-  <title>{html.escape(title)}</title>
   <link rel="stylesheet" href="{html.escape(css, quote=True)}">
-{head_extra}</head>
+</head>
 <body>
   <div class="wrap">
 {body}

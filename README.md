@@ -25,7 +25,7 @@ Pictures in a writeup must be png, jpg, gif, or webp, stored inside `writeups/`,
 
 When a writeup link is shared on WhatsApp, X, Facebook, LinkedIn, or Telegram, the preview shows a picture, the title, and a short line.
 
-- **Picture.** Put `share.jpg` in the writeup's folder, for example `writeups/negative-cart-totals/share.jpg`. Use about 1200×630 and keep it under 300 KB so WhatsApp shows it.
+- **Picture.** Put `thumb.jpg` in the writeup's folder, for example `writeups/negative-cart-totals/thumb.jpg`. A square 400×400 picture under 100 KB shows as a small preview next to the title on WhatsApp and Facebook. For a big preview instead, use `share.jpg` at about 1200×630.
 - **Short line.** Add `description:` to the title block. Without it, the first `>` quote in the writeup is used.
 
 The Arabic page `ar.html` is written by hand, so copy its preview tags from the English page when you add a new one.
