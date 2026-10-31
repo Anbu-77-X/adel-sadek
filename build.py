@@ -29,6 +29,13 @@ LANGS = ("en", "ar")
 NAMES = {"en": AUTHOR, "ar": "عادل صادق"}
 # The one line under the avatar on the home page. Change it freely.
 TAGLINE = {"en": "Bug bounty writeups.", "ar": "كتابات عن الـ bug bounty."}
+# What search engines show under the home page link.
+HOME_DESCRIPTION = {
+    "en": "Bug bounty writeups by Adel Sadek: real bugs, the requests that found them, and how to fix them.",
+    "ar": "كتابات عادل صادق عن الـ bug bounty: باجات حقيقية، والـ requests اللي كشفتها، وإزاي تتصلح.",
+}
+# The site's name in search results, and other names it may go by.
+SITE_ALTERNATE_NAMES = ["عادل صادق", "adel-sadek.net"]
 LOCALES = {"en": "en_US", "ar": "ar_EG"}
 HTML_LANG = {"en": 'lang="en"', "ar": 'lang="ar-EG" dir="rtl"'}
 WORDS_PER_MINUTE = {"en": 230, "ar": 180}
@@ -125,7 +132,7 @@ def avatar_img(prefix: str, big: bool, alt: str = AUTHOR) -> str:
 
 def icon_links(prefix: str) -> str:
     return (
-        f'  <link rel="icon" type="image/png" href="{prefix}assets/favicon.png">\n'
+        f'  <link rel="icon" type="image/png" sizes="192x192" href="{prefix}assets/favicon.png">\n'
         f'  <link rel="apple-touch-icon" href="{prefix}assets/apple-touch-icon.png">\n'
     )
 
@@ -946,18 +953,29 @@ def render_index(posts: list[Post], lang: str) -> str:
     )
     base = site_url()
     urls = {"en": base, "ar": base + "ar/"}
-    description = f"{TAGLINE[lang]} {NAMES[lang]}."
-    tags = social_tags(NAMES[lang], description, urls[lang], lang=lang) + alternate_tags(urls)
-    tags += ld_json({
-        "@context": "https://schema.org",
+    description = HOME_DESCRIPTION[lang]
+    title = f"{NAMES[lang]} — {TAGLINE[lang].rstrip('.')}"
+    tags = social_tags(title, description, urls[lang], lang=lang) + alternate_tags(urls)
+    blog = {
         "@type": "Blog",
         "name": NAMES[lang],
-        "description": TAGLINE[lang],
+        "description": description,
         "url": urls[lang],
         "inLanguage": "ar-EG" if lang == "ar" else "en",
         "author": {"@type": "Person", "name": AUTHOR},
-    })
-    return page(NAMES[lang], body, prefix, tags, description, lang=lang)
+    }
+    if lang == "en":
+        # Google takes the site name from WebSite data on the root home page only.
+        website = {
+            "@type": "WebSite",
+            "name": AUTHOR,
+            "alternateName": SITE_ALTERNATE_NAMES,
+            "url": base,
+        }
+        tags += ld_json({"@context": "https://schema.org", "@graph": [website, blog]})
+    else:
+        tags += ld_json({"@context": "https://schema.org", **blog})
+    return page(title, body, prefix, tags, description, lang=lang)
 
 
 def image_kind(data: bytes) -> str | None:

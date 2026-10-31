@@ -53,7 +53,6 @@
   --cloud: #c6c1ff;
   --line: rgba(198, 193, 255, 0.14);
   --block: #080f22;
-  --edge: rgba(198, 193, 255, 0.3);
   --serif: "Newsreader Variable", "Noto Naskh Arabic Variable", Georgia, "Times New Roman", serif;
   --mono: "JetBrains Mono Variable", "Noto Naskh Arabic Variable", ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
   --glow-x: 50%;
@@ -725,34 +724,6 @@ header {
 
 /* ---------- Writeup page ---------- */
 
-@supports (animation-timeline: scroll()) {
-  .page-post::before {
-    content: "";
-    position: fixed;
-    inset: 0 0 auto;
-    z-index: 10;
-    height: 3px;
-    background: linear-gradient(90deg, var(--cloud), rgb(var(--moonlight)));
-    box-shadow: 0 0 12px rgba(198, 193, 255, 0.6);
-    transform-origin: 0 50%;
-    animation: progress linear both;
-    animation-timeline: scroll(root);
-  }
-
-  [dir="rtl"] .page-post::before {
-    transform-origin: 100% 50%;
-  }
-}
-
-@keyframes progress {
-  from {
-    scale: 0 1;
-  }
-  to {
-    scale: 1 1;
-  }
-}
-
 /* Pictures, code and headings rise into place as they scroll in. */
 @supports (animation-timeline: view()) {
   article > :is(figure, .table-scroll, h3, blockquote) {
@@ -1109,12 +1080,7 @@ article pre {
 
 article figure.snippet pre,
 .table-scroll {
-  background:
-    linear-gradient(to right, var(--block) 35%, rgba(8, 15, 34, 0)) left center / 2.5rem 100% no-repeat local,
-    linear-gradient(to left, var(--block) 35%, rgba(8, 15, 34, 0)) right center / 2.5rem 100% no-repeat local,
-    radial-gradient(farthest-side at 0 50%, var(--edge), transparent) left center / 0.8rem 100% no-repeat scroll,
-    radial-gradient(farthest-side at 100% 50%, var(--edge), transparent) right center / 0.8rem 100% no-repeat scroll,
-    var(--block);
+  background: var(--block);
 }
 
 article figure.snippet pre {
@@ -1815,8 +1781,7 @@ html[dir="rtl"] body {
     animation: none;
   }
 
-  .shooting-star,
-  .page-post::before {
+  .shooting-star {
     display: none;
   }
 
