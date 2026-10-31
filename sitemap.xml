@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://adel-sadek.net/</loc>
+    <lastmod>2026-10-30</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://adel-sadek.net/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://adel-sadek.net/ar/"/>
+  </url>
+  <url>
+    <loc>https://adel-sadek.net/ar/</loc>
+    <lastmod>2026-10-30</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://adel-sadek.net/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://adel-sadek.net/ar/"/>
+  </url>
+  <url>
+    <loc>https://adel-sadek.net/posts/negative-cart-totals/</loc>
+    <lastmod>2026-10-30</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://adel-sadek.net/posts/negative-cart-totals/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://adel-sadek.net/posts/negative-cart-totals/ar.html"/>
+  </url>
+  <url>
+    <loc>https://adel-sadek.net/posts/negative-cart-totals/ar.html</loc>
+    <lastmod>2026-10-30</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://adel-sadek.net/posts/negative-cart-totals/"/>
+    <xhtml:link rel="alternate" hreflang="ar" href="https://adel-sadek.net/posts/negative-cart-totals/ar.html"/>
+  </url>
+</urlset>
