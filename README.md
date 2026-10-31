@@ -50,7 +50,7 @@ Every build writes `sitemap.xml`, `robots.txt` and an Atom feed (`feed.xml`). Ad
 
 ## Motion and the one script
 
-The night sky moves with CSS alone: stars twinkle, a shooting star crosses now and then, clouds drift at different depths, the moonlight breathes and the moon floats. A writeup shows reading progress along the top, and pictures and code rise into place as they scroll in.
+The night sky moves with CSS alone: stars twinkle, a shooting star crosses now and then, clouds drift at different depths, the moonlight breathes and the moon floats. In a writeup, pictures and code rise into place as they scroll in.
 
 `assets/site.js` adds the rest:
 
