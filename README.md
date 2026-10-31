@@ -48,6 +48,30 @@ Pictures in a writeup must be png, jpg, gif, or webp, stored inside `writeups/`,
 
 Every build writes `sitemap.xml`, `robots.txt` and an Atom feed (`feed.xml`). Add the site in Google Search Console and submit `sitemap.xml` once. Pages also carry canonical links, `hreflang` links between the English and Arabic versions, and structured data.
 
+## Motion and the one script
+
+The night sky moves with CSS alone: stars twinkle, a shooting star crosses now and then, clouds drift at different depths, the moonlight breathes and the moon floats. A writeup shows reading progress along the top, and pictures and code rise into place as they scroll in.
+
+`assets/site.js` adds the rest:
+
+- Copy on every code block, and Copy as cURL on an `http` block that has a `Host:` header.
+- Pinch, drag and tap to zoom in pictures, with arrows to move between them.
+- A tap on a heading's `#` copies the link to that section.
+- On the home page the moon leans toward the pointer, bounces and throws stars when tapped.
+- Cards lean toward the pointer, with a soft light under it.
+- Two easter eggs.
+
+Everything stops for a reader whose device asks for reduced motion, and every page still works with the script off.
+
+How the script is kept safe:
+
+- It is the only script the Content-Security-Policy allows (`script-src 'self'`), and the page loads it with a Subresource Integrity hash. A changed file does not run.
+- Trusted Types are required and no policy can be created, so the browser refuses to turn any string into HTML or code, even from inside `site.js`.
+- `connect-src 'none'` and `form-action 'none'` mean it cannot send anything anywhere.
+- `build.py` refuses a `site.js` that uses `innerHTML`, `eval`, `fetch` or anything similar, and refuses any page that loads another script or loads this one without the right hash.
+
+GitHub Pages cannot send security headers, so the policy is a `<meta>` tag. Everything above works from there. `frame-ancestors` does not, which does not matter for a static site with no sign-in.
+
 ## Link previews
 
 When a writeup link is shared on WhatsApp, X, Facebook, LinkedIn, or Telegram, the preview shows a picture, the title, and a short line.

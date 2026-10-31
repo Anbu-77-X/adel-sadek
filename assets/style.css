@@ -131,6 +131,16 @@ summary {
   position: absolute;
   inset: 0;
   background: radial-gradient(var(--glow-size) at var(--glow-x) 9rem, rgba(var(--moonlight), 0.2), rgba(var(--moonlight), 0.06) 45%, transparent 72%);
+  animation: breathe 8s ease-in-out infinite alternate;
+}
+
+@keyframes breathe {
+  from {
+    opacity: 0.7;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .stars {
@@ -147,6 +157,88 @@ summary {
     radial-gradient(1px 1px at 46% 34%, rgba(255, 255, 255, 0.7), transparent),
     radial-gradient(1px 1px at 92% 22%, rgba(255, 255, 255, 0.7), transparent);
   background-size: 540px 420px;
+}
+
+.stars::before,
+.stars::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1.3px 1.3px at 7% 31%, #fff, transparent),
+    radial-gradient(1px 1px at 27% 9%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 41% 71%, #fff, transparent),
+    radial-gradient(1px 1px at 63% 27%, #fff, transparent),
+    radial-gradient(1.2px 1.2px at 81% 58%, #fff, transparent),
+    radial-gradient(1px 1px at 96% 91%, #fff, transparent);
+  background-size: 610px 470px;
+  animation: twinkle 4.6s ease-in-out infinite alternate;
+}
+
+.stars::after {
+  background-size: 380px 330px;
+  background-position: 120px 60px;
+  animation-duration: 7.3s;
+  animation-delay: -3s;
+}
+
+@keyframes twinkle {
+  from {
+    opacity: 0.1;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* A shooting star now and then. */
+.shooting-star {
+  position: absolute;
+  top: var(--top);
+  left: var(--left);
+  width: 8rem;
+  height: 1.5px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, 0.95));
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.8));
+  opacity: 0;
+  transform: rotate(var(--angle));
+  animation: shoot var(--every) linear var(--wait) infinite;
+}
+
+.shooting-star.s1 {
+  --top: 11vh;
+  --left: 6vw;
+  --angle: 17deg;
+  --every: 23s;
+  --wait: 5s;
+}
+
+.shooting-star.s2 {
+  --top: 26vh;
+  --left: 52vw;
+  --angle: 25deg;
+  --every: 37s;
+  --wait: 16s;
+}
+
+.page-post .shooting-star.s2 {
+  display: none;
+}
+
+@keyframes shoot {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateX(0);
+  }
+  0.8% {
+    opacity: 1;
+  }
+  3.5%,
+  100% {
+    opacity: 0;
+    transform: rotate(var(--angle)) translateX(28rem);
+  }
 }
 
 .cloud {
@@ -202,12 +294,42 @@ summary {
   opacity: 0.38;
 }
 
+.cloud-1 { --drift: 3.5vw; --bob: 6px; --depth: -14vh; }
+.cloud-2 { --drift: 2vw; --bob: 4px; --depth: -7vh; }
+.cloud-3 { --drift: 3vw; --bob: 5px; --depth: -18vh; }
+.cloud-4 { --drift: 1.6vw; --bob: 3px; --depth: -9vh; }
+
 @keyframes drift {
   from {
-    transform: translateX(-2.5vw);
+    transform: translate(calc(var(--drift, 2.5vw) * -1), 0);
   }
   to {
-    transform: translateX(2.5vw);
+    transform: translate(var(--drift, 2.5vw), calc(var(--bob, 0px) * -1));
+  }
+}
+
+/* Depth while scrolling: near clouds rise faster than far ones, the stars barely move. */
+@supports (animation-timeline: scroll()) {
+  .cloud {
+    animation: drift var(--time, 60s) ease-in-out infinite alternate, rise linear both;
+    animation-timeline: auto, scroll(root);
+  }
+
+  .cloud-2,
+  .cloud-4 {
+    animation-direction: alternate-reverse, normal;
+  }
+
+  .stars {
+    animation: rise linear both;
+    animation-timeline: scroll(root);
+    --depth: -3vh;
+  }
+}
+
+@keyframes rise {
+  to {
+    translate: 0 var(--depth, -10vh);
   }
 }
 
@@ -258,10 +380,14 @@ header {
 }
 
 .name a {
+  --rx: 0deg;
+  --ry: 0deg;
   position: relative;
   display: inline-block;
   border-radius: 50%;
   isolation: isolate;
+  transform: perspective(700px) rotateX(var(--rx)) rotateY(var(--ry));
+  transition: transform 0.3s ease-out;
 }
 
 .name a::before {
@@ -283,6 +409,105 @@ header {
   width: clamp(8.5rem, 24vw, 10rem);
   height: auto;
   filter: drop-shadow(0 0 1.4rem rgba(var(--moonlight), 0.28));
+  animation: float 6.5s ease-in-out infinite;
+}
+
+.name .avatar.boing {
+  animation: boing 0.75s cubic-bezier(0.3, 1.5, 0.5, 1), float 6.5s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  50% {
+    translate: 0 -7px;
+  }
+}
+
+@keyframes boing {
+  0% { scale: 1 1; }
+  18% { scale: 1.2 0.8; }
+  38% { scale: 0.88 1.14; }
+  58% { scale: 1.07 0.94; }
+  78% { scale: 0.97 1.03; }
+  100% { scale: 1 1; }
+}
+
+/* Stars thrown by the moon, and the meteor shower. */
+.sparks {
+  position: fixed;
+  z-index: 30;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.spark {
+  position: absolute;
+  top: calc(var(--size) / -2);
+  left: calc(var(--size) / -2);
+  width: var(--size);
+  height: var(--size);
+  background: rgb(var(--moonlight));
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+  filter: drop-shadow(0 0 6px rgba(var(--moonlight), 0.9));
+  animation: spark 1s cubic-bezier(0.2, 0.8, 0.3, 1) var(--delay) both;
+}
+
+@keyframes spark {
+  from {
+    opacity: 1;
+    translate: 0 0;
+    scale: 0.2;
+    rotate: 0deg;
+  }
+  70% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    translate: var(--dx) var(--dy);
+    scale: 1;
+    rotate: 150deg;
+  }
+}
+
+.meteors {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.meteor {
+  position: absolute;
+  top: var(--y);
+  left: var(--x);
+  width: 7rem;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), #fff);
+  filter: drop-shadow(0 0 6px rgba(198, 193, 255, 0.95));
+  opacity: 0;
+  rotate: 35deg;
+  animation: meteor var(--time) ease-in var(--delay) both;
+}
+
+@keyframes meteor {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: 40vh 28vh;
+  }
 }
 
 .name a:hover .avatar,
@@ -420,6 +645,52 @@ header {
   transform: scale(0.985);
 }
 
+.index li,
+.end-card {
+  --mx: 50%;
+  --my: 50%;
+  --rx: 0deg;
+  --ry: 0deg;
+  isolation: isolate;
+}
+
+.end-card {
+  position: relative;
+}
+
+.index li::before,
+.end-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: radial-gradient(22rem circle at var(--mx) var(--my), rgba(198, 193, 255, 0.13), transparent 60%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.index li.is-lit::before,
+.end-card.is-lit::before {
+  opacity: 1;
+}
+
+.index li.is-lit,
+.end-card.is-lit {
+  transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry)) translateY(-2px);
+}
+
+[data-vt] {
+  display: inline-block;
+  view-transition-name: attr(data-vt type(<custom-ident>));
+}
+
+::view-transition-group(*) {
+  animation-duration: 0.45s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
 .badge {
   display: inline-block;
   margin-inline-start: 0.5rem;
@@ -453,6 +724,54 @@ header {
 }
 
 /* ---------- Writeup page ---------- */
+
+@supports (animation-timeline: scroll()) {
+  .page-post::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 10;
+    height: 3px;
+    background: linear-gradient(90deg, var(--cloud), rgb(var(--moonlight)));
+    box-shadow: 0 0 12px rgba(198, 193, 255, 0.6);
+    transform-origin: 0 50%;
+    animation: progress linear both;
+    animation-timeline: scroll(root);
+  }
+
+  [dir="rtl"] .page-post::before {
+    transform-origin: 100% 50%;
+  }
+}
+
+@keyframes progress {
+  from {
+    scale: 0 1;
+  }
+  to {
+    scale: 1 1;
+  }
+}
+
+/* Pictures, code and headings rise into place as they scroll in. */
+@supports (animation-timeline: view()) {
+  article > :is(figure, .table-scroll, h3, blockquote) {
+    animation: reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 45%;
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    translate: 0 1.25rem;
+  }
+  to {
+    opacity: 1;
+    translate: none;
+  }
+}
 
 .post-title {
   margin: 0 0 0.4rem;
@@ -720,6 +1039,48 @@ article figure.snippet {
   background: var(--block);
 }
 
+article figure.snippet {
+  position: relative;
+}
+
+.snippet-tools {
+  position: absolute;
+  top: 0.22rem;
+  right: 0.35rem;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.snippet-btn {
+  padding: 0.32rem 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 0.45rem;
+  background: rgba(12, 20, 44, 0.92);
+  color: var(--haze);
+  font: 500 0.7rem/1 var(--mono);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.snippet-btn:hover,
+.snippet-btn:focus-visible {
+  border-color: rgba(198, 193, 255, 0.5);
+  color: var(--bright);
+}
+
+.snippet-btn:active {
+  scale: 0.95;
+}
+
+.snippet-btn.is-done {
+  border-color: rgba(158, 240, 192, 0.5);
+  color: #9ef0c0;
+}
+
+article figure.snippet.has-tools:not(:has(figcaption)) pre {
+  padding-top: 2.4rem;
+}
+
 article figure.snippet figcaption {
   margin: 0;
   padding: 0.45rem 0.95rem;
@@ -975,6 +1336,69 @@ article .lightbox img {
   cursor: pointer;
 }
 
+.lightbox.can-zoom img {
+  cursor: zoom-in;
+  pointer-events: auto;
+  touch-action: none;
+  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+}
+
+.lightbox.is-zoomed img {
+  cursor: grab;
+}
+
+.lightbox.can-zoom img.is-moving {
+  transition: none;
+}
+
+.lightbox-nav {
+  position: fixed;
+  top: 50%;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid rgba(198, 193, 255, 0.35);
+  border-radius: 50%;
+  background: rgba(12, 20, 44, 0.85);
+  color: var(--bright);
+  font: 400 1.7rem/1 var(--mono);
+  translate: 0 -50%;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.lightbox-nav.prev {
+  inset-inline-start: max(0.75rem, env(safe-area-inset-left));
+}
+
+.lightbox-nav.next {
+  inset-inline-end: max(0.75rem, env(safe-area-inset-right));
+}
+
+.lightbox.is-zoomed .lightbox-nav {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.lightbox-count {
+  position: fixed;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  left: 50%;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(12, 20, 44, 0.85);
+  color: var(--haze);
+  font: 0.78rem/1.2 var(--mono);
+  translate: -50% 0;
+  pointer-events: none;
+}
+
+.lightbox-nav:hover,
+.lightbox-nav:focus-visible,
 .lightbox-close:hover,
 .lightbox-close:focus-visible {
   background: var(--cloud);
@@ -1093,6 +1517,115 @@ article .lightbox img {
     translate: 0 0;
     pointer-events: auto;
   }
+}
+
+/* ---------- Little messages, and the bug ---------- */
+
+.toast {
+  position: fixed;
+  bottom: max(1.25rem, env(safe-area-inset-bottom));
+  left: 50%;
+  z-index: 40;
+  width: max-content;
+  max-width: calc(100vw - 2rem);
+  padding: 0.65rem 1.15rem;
+  border: 1px solid rgba(198, 193, 255, 0.35);
+  border-radius: 999px;
+  background: rgba(12, 20, 44, 0.94);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 18px 40px -20px rgba(0, 0, 0, 0.9);
+  color: var(--bright);
+  font-size: 0.95rem;
+  line-height: 1.35;
+  text-align: center;
+  opacity: 0;
+  translate: -50% 1rem;
+  transition: opacity 0.25s ease, translate 0.25s ease;
+  pointer-events: none;
+}
+
+.toast.is-on {
+  opacity: 1;
+  translate: -50% 0;
+}
+
+.bug {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  width: 30px;
+  height: 30px;
+  cursor: pointer;
+  filter: drop-shadow(0 0 6px rgba(198, 193, 255, 0.6));
+}
+
+/* A bigger area to tap than the bug itself. */
+.bug::before {
+  content: "";
+  position: absolute;
+  inset: -14px;
+}
+
+.bug svg {
+  display: block;
+  overflow: visible;
+}
+
+.bug-body { fill: #c6c1ff; }
+.bug-head { fill: #8f88e8; }
+.bug-line { fill: none; stroke: #2d2c66; stroke-width: 1.2; }
+.bug-dot { fill: #2d2c66; }
+
+.bug-legs line,
+.bug-feelers {
+  fill: none;
+  stroke: #c6c1ff;
+  stroke-linecap: round;
+  stroke-width: 1.4;
+}
+
+.bug-legs {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: scuttle 0.2s ease-in-out infinite alternate;
+}
+
+@keyframes scuttle {
+  from {
+    rotate: -7deg;
+  }
+  to {
+    rotate: 7deg;
+  }
+}
+
+.bug.is-caught svg {
+  animation: caught 1.1s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+
+@keyframes caught {
+  0% {
+    scale: 1;
+    opacity: 1;
+  }
+  25% {
+    scale: 1.7;
+  }
+  100% {
+    scale: 0.4;
+    opacity: 0;
+    rotate: 540deg;
+    translate: 0 -60px;
+  }
+}
+
+.copy-box {
+  position: fixed;
+  top: -200px;
+  left: 0;
+  opacity: 0;
 }
 
 /* ---------- Arabic (right to left) ---------- */
@@ -1271,8 +1804,26 @@ html[dir="rtl"] body {
     navigation: none;
   }
 
-  .cloud {
+  .cloud,
+  .stars,
+  .stars::before,
+  .stars::after,
+  .sky::after,
+  .name .avatar,
+  .bug-legs,
+  article > * {
     animation: none;
+  }
+
+  .shooting-star,
+  .page-post::before {
+    display: none;
+  }
+
+  .name a,
+  .index li.is-lit,
+  .end-card.is-lit {
+    transform: none;
   }
 
   .avatar,
