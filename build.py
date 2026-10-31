@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import base64
 import datetime as dt
 import hashlib
 import html
@@ -75,14 +76,44 @@ SKY = (
     '    <span class="cloud cloud-2"></span>\n'
     '    <span class="cloud cloud-3"></span>\n'
     '    <span class="cloud cloud-4"></span>\n'
+    '    <span class="shooting-star s1"></span>\n'
+    '    <span class="shooting-star s2"></span>\n'
     '  </div>\n'
+)
+SCRIPT = ROOT / "assets" / "site.js"
+# Ways a script can turn a string into code or HTML, or talk to the network.
+# The site's script must use none of them.
+_RISKY_JS = re.compile(
+    r"\.(?:inner|outer)HTML\b|insertAdjacentHTML|document\.write|\beval\s*\(|new\s+Function\b"
+    r"|set(?:Timeout|Interval)\s*\(\s*[\"'`]|\.srcdoc\b|createContextualFragment|DOMParser"
+    r"|\bfetch\s*\(|XMLHttpRequest|WebSocket|EventSource|sendBeacon|\bimport\s*\(|importScripts|postMessage"
 )
 
 
-def asset_version() -> str:
-    """Short fingerprint of the stylesheet, so browsers fetch it again after every change."""
-    data = (ROOT / "assets" / "style.css").read_bytes()
+def asset_version(name: str = "style.css") -> str:
+    """Short fingerprint of a file in assets, so browsers fetch it again after every change."""
+    data = (ROOT / "assets" / name).read_bytes()
     return hashlib.sha256(data).hexdigest()[:8]
+
+
+def script_integrity() -> str:
+    """Subresource Integrity: the browser runs site.js only if it is exactly this file."""
+    digest = hashlib.sha384(SCRIPT.read_bytes()).digest()
+    return "sha384-" + base64.b64encode(digest).decode("ascii")
+
+
+def check_script() -> None:
+    if not SCRIPT.is_file() or SCRIPT.is_symlink():
+        raise BuildError("assets/site.js is missing")
+    text = SCRIPT.read_text(encoding="utf-8")
+    risky = _RISKY_JS.search(text)
+    if risky:
+        raise BuildError(f"assets/site.js uses something the site does not allow: {risky.group(0)}")
+
+
+def script_tag(prefix: str) -> str:
+    src = f"{prefix}assets/site.js?v={asset_version('site.js')}"
+    return f'  <script src="{html.escape(src, quote=True)}" integrity="{script_integrity()}" defer></script>\n'
 
 
 def avatar_img(prefix: str, big: bool, alt: str = AUTHOR) -> str:
@@ -136,12 +167,15 @@ SECRET_NAMES = {
     "service-account.json",
 }
 TEXT_SUFFIXES = {".py", ".md", ".html", ".css", ".txt", ".xml", ".gitignore"}
+# One script, from this site only, checked byte for byte. Trusted Types are required and no
+# policy can be made, so the browser refuses any attempt to turn a string into HTML or code.
 SKIP_DIRS = {".git", "__pycache__"}
 CSP = (
     "default-src 'none'; style-src 'self'; img-src 'self'; "
-    "font-src 'self'; base-uri 'none'; form-action 'none'; script-src 'none'; "
+    "font-src 'self'; base-uri 'none'; form-action 'none'; script-src 'self'; "
     "object-src 'none'; frame-src 'none'; connect-src 'none'; "
-    "manifest-src 'none'; media-src 'none'; worker-src 'none'"
+    "manifest-src 'none'; media-src 'none'; worker-src 'none'; "
+    "require-trusted-types-for 'script'; trusted-types 'none'"
 )
 
 
@@ -840,7 +874,7 @@ def page(title: str, body: str, prefix: str, head_extra: str = "", description: 
   <meta name="theme-color" content="{THEME_COLOR}">
   <meta name="color-scheme" content="dark">
   <link rel="stylesheet" href="{html.escape(css, quote=True)}">
-{feed}{icon_links(prefix)}</head>
+{script_tag(prefix)}{feed}{icon_links(prefix)}</head>
 <body class="{kind}">
 {SKY}  <div class="wrap" id="top">
 {body}
@@ -896,7 +930,7 @@ def render_index(posts: list[Post], lang: str) -> str:
                 "        <li>\n"
                 f'          <time datetime="{html.escape(post.date)}" dir="ltr">{html.escape(post.date)}</time>\n'
                 f'          <a{text_dir} href="{html.escape(href, quote=True)}">'
-                f'<span class="title" data-vt="{html.escape(post.slug, quote=True)}">{html.escape(shown.title)}</span>{badge}</a>\n'
+                f'<span class="title" data-vt="vt-{html.escape(post.slug, quote=True)}">{html.escape(shown.title)}</span>{badge}</a>\n'
                 f"{line}"
                 "        </li>"
             )
@@ -1102,7 +1136,7 @@ def render_post(post: Post, planned: list[tuple[Path, Path]], newer: Post | None
         f'    <nav class="crumbs" aria-label="{html.escape(words["home_label"], quote=True)}">'
         f'<a class="home" href="{home_href}">{avatar_img("../../", False, NAMES[lang])}'
         f'<span class="crumb-text"><span aria-hidden="true">{words["back"]}</span> {html.escape(words["all"])}</span></a></nav>\n'
-        f'    <h1 class="post-title" dir="auto"><span data-vt="{html.escape(post.slug, quote=True)}">{html.escape(post.title)}</span></h1>\n'
+        f'    <h1 class="post-title" dir="auto"><span data-vt="vt-{html.escape(post.slug, quote=True)}">{html.escape(post.title)}</span></h1>\n'
         f'    <p class="meta"><time datetime="{html.escape(post.date)}"{time_dir}>{html.escape(post.date)}</time>'
         f'<span class="dot" aria-hidden="true">·</span><span class="read">{html.escape(minutes)}</span>{switch}</p>\n'
         f"{contents}"
@@ -1137,7 +1171,7 @@ def render_missing() -> str:
         f'<span lang="ar" dir="rtl">{html.escape(TEXT["ar"]["missing"])}</span></p>\n'
         f'    <p class="empty"><a class="lang-btn" href="{prefix}">{html.escape(TEXT["en"]["go_home"])}</a></p>'
     )
-    return page(AUTHOR, body, prefix, '  <meta name="robots" content="noindex">\n')
+    return page(AUTHOR, body, prefix, '  <meta name="robots" content="noindex">\n', kind="page-missing")
 
 
 def render_feed(posts: list[Post]) -> str:
@@ -1203,6 +1237,7 @@ def render_robots() -> str:
 
 
 _LD_BLOCK = re.compile(r'<script type="application/ld\+json">([^<]*)</script>')
+_SCRIPT_TAG = re.compile(r'<script src="([^"]*)" integrity="([^"]*)" defer></script>')
 
 
 def audit_html(page_html: str, prefix: str) -> None:
@@ -1225,7 +1260,11 @@ def audit_html(page_html: str, prefix: str) -> None:
                     raise BuildError("structured data points at another site")
 
         walk(data)
-    rest = _LD_BLOCK.sub("", page_html)
+    scripts = _SCRIPT_TAG.findall(page_html)
+    expected = f"{prefix}assets/site.js?v={asset_version('site.js')}"
+    if scripts != [(expected, script_integrity())]:
+        raise BuildError("the page must load exactly the site's own script, with its integrity hash")
+    rest = _SCRIPT_TAG.sub("", _LD_BLOCK.sub("", page_html))
     if re.search(r"<\s*(script|iframe|object|embed|form|base|style)\b", rest, re.I):
         raise BuildError("refusing to write a page with an active tag")
     if re.search(r"<[^>]*\son[a-z]+\s*=", rest, re.I):
@@ -1297,6 +1336,7 @@ def publish_domain() -> None:
 
 def build_site() -> int:
     self_check()
+    check_script()
     posts = load_posts()
     planned: list[tuple[Path, Path]] = []
     pages: dict[Path, str] = {}
@@ -1369,6 +1409,8 @@ def create_new(title: str) -> None:
 
 
 def allowed_text(path: Path) -> bool:
+    if path.suffix.lower() == ".js":
+        return path.resolve() == SCRIPT.resolve()
     return path.name in {".gitignore", ".nojekyll", "CNAME", "domain.txt"} or path.suffix.lower() in TEXT_SUFFIXES
 
 
@@ -1460,6 +1502,8 @@ def self_check() -> None:
     sneaky = highlight("GET /<script> HTTP/1.1\nX-<b>: <i>\n\n<svg>", "http")
     expect("<script" not in sneaky and "<b>" not in sneaky and "<svg" not in sneaky, "http escaping")
     expect("<b" not in highlight("'<b>' // <i>", "js"), "generic escaping")
+    for risky in ("el.innerHTML = x", "eval(x)", "setTimeout('x')", "fetch(url)", "new Function('x')"):
+        expect(_RISKY_JS.search(risky) is not None, f"script lint catches {risky}")
     expect(find_secret("ordinary notes") is None, "no secret")
     expect(find_secret("-----BEGIN " + "PRIVATE KEY-----") == "private key", "pem")
     expect(find_secret("gh" + "p_" + ("a" * 20)) == "git hosting token", "github token")
@@ -1467,7 +1511,9 @@ def self_check() -> None:
     good = page("t", "<p>x</p>", "")
     audit_html(good, "")
     for bad in ('<a onclick="x">', '<p style="x">', "<style>", '<a href=" javascript:x">',
-                "<script>x</script>", '<img src="https://evil.example/x.png">', '<a href="//evil.example">'):
+                "<script>x</script>", '<img src="https://evil.example/x.png">', '<a href="//evil.example">',
+                '<script src="assets/site.js?v=00000000" integrity="sha384-x" defer></script>',
+                '<script src="https://evil.example/a.js" integrity="sha384-x" defer></script>'):
         refused = False
         try:
             audit_html(good.replace("<p>x</p>", bad), "")
@@ -1516,6 +1562,7 @@ def main(argv: list[str]) -> int:
             return 0
         if command == "check":
             self_check()
+            check_script()
             publish_domain()
             scan_tree()
             print("No keys, tokens, or remote code. Safe to put on GitHub.")
