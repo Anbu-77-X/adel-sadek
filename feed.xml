@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Adel Sadek</title>
+  <subtitle>Bug bounty writeups.</subtitle>
+  <link href="https://adel-sadek.net/"/>
+  <link rel="self" href="https://adel-sadek.net/feed.xml"/>
+  <id>https://adel-sadek.net/</id>
+  <updated>2026-10-30T00:00:00Z</updated>
+  <author><name>Adel Sadek</name></author>
+  <entry>
+    <title>Negative Cart Totals</title>
+    <link href="https://adel-sadek.net/posts/negative-cart-totals/"/>
+    <id>https://adel-sadek.net/posts/negative-cart-totals/</id>
+    <published>2026-10-30T00:00:00Z</published>
+    <updated>2026-10-30T00:00:00Z</updated>
+    <summary>Swapping the dates on a second add dragged a rental cart to −€477,673.13.</summary>
+  </entry>
+</feed>

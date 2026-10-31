@@ -15,20 +15,45 @@ python3 build.py check
 python3 build.py
 ```
 
-Open `index.html`. Commit the new Markdown and the new files under `posts/` as well. GitHub Pages serves the files as they are. It does not run `build.py`.
+Preview it with `python3 build.py serve`. Commit the new Markdown and everything the build wrote (`posts/`, `ar/`, `index.html`, `404.html`, `feed.xml`, `sitemap.xml`, `robots.txt`). GitHub Pages serves the files as they are. It does not run `build.py`.
 
-A file whose name starts with `_` stays off the list. Unfinished pieces go in `writeups/drafts/`. That folder is ignored by git, so it is not published. Delete `writeups/2026-10-30-how-these-notes-are-filed.md` when you no longer want the sample.
+Links between pages point at folders (`posts/negative-cart-totals/`), the same address search engines index, so open the site through `serve` rather than double-clicking `index.html`.
 
-Pictures in a writeup must be png, jpg, gif, or webp, stored inside `writeups/`, and linked by a relative path.
+A file whose name starts with `_` stays off the list. Unfinished pieces go in `writeups/drafts/`. That folder is ignored by git, so it is not published.
+
+## Arabic version
+
+Put the Arabic text beside the English file, with `.ar` before `.md` and the same date and name:
+
+```text
+writeups/2026-10-30-negative-cart-totals.md
+writeups/2026-10-30-negative-cart-totals.ar.md
+```
+
+It has its own `title:` and `description:` and uses the same Markdown. The build gives it the right-to-left layout, keeps code left-to-right, keeps amounts like −€477,673.13 in order, links the two pages to each other, and lists it on the Arabic home page (`ar/`).
+
+## What a writeup page gets
+
+Built from the Markdown, with no script on the page:
+
+- A contents list from the `##` headings, and a `#` link beside each heading.
+- Reading time, the language switch, and links back to the list and to the top.
+- Code colors for `json`, `http`, `js`, `python` and `bash` blocks. Write the language after the three backticks, and an optional label after it: ```` ```json Payload ````.
+- Tables turn into stacked rows on phones.
+- Pictures open large when tapped.
+
+Pictures in a writeup must be png, jpg, gif, or webp, stored inside `writeups/`, and linked by a relative path. Prefer webp for large pictures: the hero went from 1.8 MB as png to 180 KB as webp.
+
+## Search engines
+
+Every build writes `sitemap.xml`, `robots.txt` and an Atom feed (`feed.xml`). Add the site in Google Search Console and submit `sitemap.xml` once. Pages also carry canonical links, `hreflang` links between the English and Arabic versions, and structured data.
 
 ## Link previews
 
 When a writeup link is shared on WhatsApp, X, Facebook, LinkedIn, or Telegram, the preview shows a picture, the title, and a short line.
 
-- **Picture.** Put `thumb.jpg` in the writeup's folder, for example `writeups/negative-cart-totals/thumb.jpg`. A square 400×400 picture under 100 KB shows as a small preview next to the title on WhatsApp and Facebook. For a big preview instead, use `share.jpg` at about 1200×630.
+- **Picture.** Put `share.jpg` at about 1200×630 in the writeup's folder, for example `writeups/negative-cart-totals/share.jpg`, for the big preview card. Without it, a square `thumb.jpg` (400×400, under 100 KB) gives a small preview next to the title. When both exist, `share.jpg` wins.
 - **Short line.** Add `description:` to the title block. Without it, the first `>` quote in the writeup is used.
-
-The Arabic page `ar.html` is written by hand, so copy its preview tags from the English page when you add a new one.
 
 Apps keep old previews for a while. After changing a picture, refresh it with Facebook's Sharing Debugger, or share the link with `?v=2` at the end.
 

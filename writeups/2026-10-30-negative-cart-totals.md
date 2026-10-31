@@ -3,7 +3,7 @@ title: Negative Cart Totals
 date: 2026-10-30
 ---
 
-![A rental cart pulled down to a negative total](negative-cart-totals/hero.png)
+![A rental cart pulled down to a negative total](negative-cart-totals/hero.webp)
 
 > Swapping the dates on a second add dragged a rental cart to −€477,673.13.
 
