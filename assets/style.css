@@ -858,6 +858,63 @@ header {
   box-shadow: 0 40px 80px -50px rgba(0, 0, 0, 0.95);
 }
 
+.top-bar-home {
+  position: relative;
+  z-index: 3;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+a.harbor-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2rem;
+  padding: 0.3rem 0.95rem 0.34rem 0.7rem;
+  border: 1px solid rgba(198, 193, 255, 0.45);
+  border-radius: 999px;
+  background: rgba(13, 17, 32, 0.55);
+  color: var(--cloud);
+  font-size: 0.92rem;
+  line-height: 1;
+  text-decoration: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.harbor-ship {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: none;
+}
+
+.harbor-name {
+  font-weight: 600;
+}
+
+.harbor-sub {
+  padding-inline-start: 0.5rem;
+  border-inline-start: 1px solid currentColor;
+  opacity: 0.75;
+}
+
+a.harbor-btn:hover,
+a.harbor-btn:focus-visible {
+  background: var(--cloud);
+  border-color: var(--cloud);
+  color: #101b3b;
+}
+
+a.harbor-btn:active {
+  transform: scale(0.96);
+}
+
+@media (max-width: 420px) {
+  .harbor-sub {
+    display: none;
+  }
+}
+
 a.lang-btn {
   display: inline-flex;
   align-items: center;
@@ -1795,6 +1852,7 @@ html[dir="rtl"] body {
   .index li,
   article figure.shot img,
   a.lang-btn,
+  a.harbor-btn,
   .lightbox,
   .lightbox img {
     transition: none;

@@ -56,6 +56,7 @@ TEXT = {
         "older": "Older",
         "english": "English",
         "home_label": "Home",
+        "harbor": "Security videos",
     },
     "ar": {
         "all": "كل الـ writeups",
@@ -73,6 +74,7 @@ TEXT = {
         "older": "الأقدم",
         "english": "English",
         "home_label": "الرئيسية",
+        "harbor": "فيديوهات سيكيوريتي",
     },
 }
 # Night sky behind every page: drifting clouds and a few stars. Pure CSS and SVG, no script.
@@ -902,6 +904,25 @@ def lang_switch(href: str, lang: str, extra_class: str = "") -> str:
     )
 
 
+HARBOR_URL = "https://harbor.adel-sadek.net/"
+HARBOR_SHIP = (
+    '<svg class="harbor-ship" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
+    '<path d="M12 3v9M12 4.5l5 5.5h-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>'
+    '<path d="M4.5 13.5h15l-2.2 4H6.7z" fill="currentColor"/>'
+    '<path d="M3.5 20.5c1.4 0 1.4-.9 2.8-.9s1.4.9 2.8.9 1.4-.9 2.8-.9 1.4.9 2.8.9 1.4-.9 2.8-.9 1.4.9 2.8.9" '
+    'fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>'
+)
+
+
+def harbor_link(lang: str) -> str:
+    """A quiet pill to the video site, beside the language switch on the home pages."""
+    return (
+        f'<a class="harbor-btn" href="{HARBOR_URL}" lang="en" dir="ltr">{HARBOR_SHIP}'
+        f'<span class="harbor-name">HackHarbor</span>'
+        f'<span class="harbor-sub" lang="{lang}" dir="{"rtl" if lang == "ar" else "ltr"}">{html.escape(TEXT[lang]["harbor"])}</span></a>'
+    )
+
+
 def render_index(posts: list[Post], lang: str) -> str:
     """Home page. English at the root, Arabic under ar/."""
     words = TEXT[lang]
@@ -945,7 +966,7 @@ def render_index(posts: list[Post], lang: str) -> str:
         listing = "\n".join(parts)
     switch_href = "ar/" if lang == "en" else "../"
     body = (
-        f'    <nav class="top-bar">{lang_switch(switch_href, lang)}</nav>\n'
+        f'    <nav class="top-bar top-bar-home">{harbor_link(lang)}{lang_switch(switch_href, lang)}</nav>\n'
         f'    <header>\n      <h1 class="name"><a href="./" aria-label="{html.escape(NAMES[lang], quote=True)}">'
         f"{avatar_img(prefix, True, NAMES[lang])}</a></h1>\n"
         f'      <p class="tagline">{html.escape(TAGLINE[lang])}</p>\n'
