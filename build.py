@@ -915,11 +915,14 @@ HARBOR_SHIP = (
 
 
 def harbor_link(lang: str) -> str:
-    """A quiet pill to the video site, beside the language switch on the home pages."""
+    """A quiet line under the tagline that leads to the video site."""
+    arrow = "←" if lang == "ar" else "→"
+    direction = "rtl" if lang == "ar" else "ltr"
     return (
-        f'<a class="harbor-btn" href="{HARBOR_URL}" lang="en" dir="ltr">{HARBOR_SHIP}'
-        f'<span class="harbor-name">HackHarbor</span>'
-        f'<span class="harbor-sub" lang="{lang}" dir="{"rtl" if lang == "ar" else "ltr"}">{html.escape(TEXT[lang]["harbor"])}</span></a>'
+        f'      <a class="harbor-link" href="{HARBOR_URL}" dir="{direction}">{HARBOR_SHIP}'
+        f'<span class="hl-name" lang="en" dir="ltr">HackHarbor</span>'
+        f'<span class="hl-sub" lang="{lang}">{html.escape(TEXT[lang]["harbor"])}</span>'
+        f'<span class="hl-arrow" aria-hidden="true">{arrow}</span></a>\n'
     )
 
 
@@ -966,10 +969,11 @@ def render_index(posts: list[Post], lang: str) -> str:
         listing = "\n".join(parts)
     switch_href = "ar/" if lang == "en" else "../"
     body = (
-        f'    <nav class="top-bar top-bar-home">{harbor_link(lang)}{lang_switch(switch_href, lang)}</nav>\n'
+        f'    <nav class="top-bar">{lang_switch(switch_href, lang)}</nav>\n'
         f'    <header>\n      <h1 class="name"><a href="./" aria-label="{html.escape(NAMES[lang], quote=True)}">'
         f"{avatar_img(prefix, True, NAMES[lang])}</a></h1>\n"
         f'      <p class="tagline">{html.escape(TAGLINE[lang])}</p>\n'
+        f"{harbor_link(lang)}"
         f"    </header>\n{listing}"
     )
     base = site_url()
