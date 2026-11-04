@@ -865,6 +865,8 @@ header {
   justify-content: center;
   gap: 0.7rem;
   margin: 1.4rem 0 0;
+  /* HackHarbor carries an icon, so the row looks heavier on its side. Lean it back a little. */
+  padding-inline-end: 1.25rem;
   font-size: 0.98rem;
   line-height: 1.3;
 }
