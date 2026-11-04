@@ -34,7 +34,7 @@ It has its own `title:` and `description:` and uses the same Markdown. The build
 
 ## About page
 
-`about/` and `ar/about/` show the portrait, a role line and a short bio. The words live in `ABOUT` near the top of `build.py`, and the picture is `assets/portrait.webp` (480×480). Change either, bump `ABOUT_UPDATED`, and run `python3 build.py`. The home page links to it from the pill beside the language switch.
+`about/` and `ar/about/` show the portrait, a role line and a short bio. The words live in `ABOUT` near the top of `build.py`, and the picture is `assets/portrait.webp` (480×480). Change either, bump `ABOUT_UPDATED`, and run `python3 build.py`. The home page links to it from "About me", beside HackHarbor under the tagline.
 
 ## What a writeup page gets
 

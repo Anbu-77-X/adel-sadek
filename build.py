@@ -79,8 +79,8 @@ TEXT = {
         "older": "Older",
         "english": "English",
         "home_label": "Home",
-        "harbor": "Security videos",
-        "about": "About",
+        "about": "About me",
+        "links": "About and videos",
     },
     "ar": {
         "all": "كل الـ writeups",
@@ -98,8 +98,8 @@ TEXT = {
         "older": "الأقدم",
         "english": "English",
         "home_label": "الرئيسية",
-        "harbor": "فيديوهات سيكيوريتي",
         "about": "عنّي",
+        "links": "عنّي والفيديوهات",
     },
 }
 # Night sky behind every page: drifting clouds and a few stars. Pure CSS and SVG, no script.
@@ -939,15 +939,14 @@ HARBOR_SHIP = (
 )
 
 
-def harbor_link(lang: str) -> str:
-    """A quiet line under the tagline that leads to the video site."""
-    arrow = "←" if lang == "ar" else "→"
-    direction = "rtl" if lang == "ar" else "ltr"
+def header_links(lang: str) -> str:
+    """Two quiet links under the tagline: the About page, then the video site."""
+    words = TEXT[lang]
     return (
-        f'      <a class="harbor-link" href="{HARBOR_URL}" dir="{direction}">{HARBOR_SHIP}'
-        f'<span class="hl-name" lang="en" dir="ltr">HackHarbor</span>'
-        f'<span class="hl-sub" lang="{lang}">{html.escape(TEXT[lang]["harbor"])}</span>'
-        f'<span class="hl-arrow" aria-hidden="true">{arrow}</span></a>\n'
+        f'      <nav class="header-links" aria-label="{html.escape(words["links"], quote=True)}">'
+        f'<a href="about/">{html.escape(words["about"])}</a>'
+        '<span class="header-bar" aria-hidden="true">|</span>'
+        f'<a href="{HARBOR_URL}" lang="en" dir="ltr">{HARBOR_SHIP}HackHarbor</a></nav>\n'
     )
 
 
@@ -993,13 +992,12 @@ def render_index(posts: list[Post], lang: str) -> str:
         parts.append("      </ol>\n    </section>" if grouped else "    </ol>")
         listing = "\n".join(parts)
     switch_href = "ar/" if lang == "en" else "../"
-    about_link = f'<a class="lang-btn" href="about/">{html.escape(words["about"])}</a>'
     body = (
-        f'    <nav class="top-bar">{about_link}{lang_switch(switch_href, lang)}</nav>\n'
+        f'    <nav class="top-bar">{lang_switch(switch_href, lang)}</nav>\n'
         f'    <header>\n      <h1 class="name"><a href="./" aria-label="{html.escape(NAMES[lang], quote=True)}">'
         f"{avatar_img(prefix, True, NAMES[lang])}</a></h1>\n"
         f'      <p class="tagline">{html.escape(TAGLINE[lang])}</p>\n'
-        f"{harbor_link(lang)}"
+        f"{header_links(lang)}"
         f"    </header>\n{listing}"
     )
     base = site_url()
