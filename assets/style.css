@@ -1929,6 +1929,13 @@ html[dir="rtl"] body {
   font-style: normal;
 }
 
+/* The bold name and the italic role read a touch right of the portrait. Pull them back a little. */
+html:not([dir="rtl"]) .about h1,
+html:not([dir="rtl"]) .about .role {
+  position: relative;
+  left: -0.2rem;
+}
+
 .about .bio {
   max-width: 30rem;
   margin: 1.8rem 0 0;
