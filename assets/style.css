@@ -1886,3 +1886,81 @@ html[dir="rtl"] body {
     padding: 0;
   }
 }
+
+/* ---------- About: one portrait, a few lines ---------- */
+.top-bar {
+  gap: 0.5rem;
+}
+
+.about-crumbs {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.about {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 1rem;
+  text-align: center;
+}
+
+.portrait {
+  position: relative;
+  margin: 0;
+  line-height: 0;
+  isolation: isolate;
+}
+
+/* The same moonlight that sits behind the avatar on the home page. */
+.portrait::before {
+  content: "";
+  position: absolute;
+  inset: -38%;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(var(--moonlight), 0.26), rgba(var(--moonlight), 0.07) 60%, transparent);
+}
+
+.portrait-img {
+  width: clamp(9rem, 38vw, 11rem);
+  height: auto;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(var(--moonlight), 0.35), 0 0 1.6rem rgba(var(--moonlight), 0.22);
+  animation: float 6.5s ease-in-out infinite;
+}
+
+.about h1 {
+  margin: 2rem 0 0;
+  color: var(--bright);
+  font-size: 1.7rem;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+}
+
+.about .role {
+  margin: 0.35rem 0 0;
+  color: var(--haze);
+  font-size: 1.05rem;
+  font-style: italic;
+}
+
+[dir="rtl"] .about .role {
+  font-style: normal;
+}
+
+.about .bio {
+  max-width: 30rem;
+  margin: 1.8rem 0 0;
+  color: var(--moon);
+  font-size: 1.1rem;
+  line-height: 1.75;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portrait-img {
+    animation: none;
+  }
+}
