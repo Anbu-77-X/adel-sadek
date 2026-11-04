@@ -19,7 +19,7 @@ from urllib.parse import unquote, urlparse
 ROOT = Path(__file__).resolve().parent
 WRITEUPS = ROOT / "writeups"
 POSTS = ROOT / "posts"
-AR_HOME = ROOT / "ar"
+AR_HOME = ROOT / "ar"  # holds only the Arabic About page; the home page is English only
 AUTHOR = "Adel Sadek"
 # Where GitHub Pages serves the site. A domain in domain.txt or CNAME takes over.
 PAGES_URL = "https://anbu-77-x.github.io/adel-sadek/"
@@ -34,6 +34,29 @@ HOME_DESCRIPTION = {
     "en": "Bug bounty writeups by Adel Sadek: real bugs, the requests that found them, and how to fix them.",
     "ar": "كتابات عادل صادق عن الـ bug bounty: باجات حقيقية، والـ requests اللي كشفتها، وإزاي تتصلح.",
 }
+# The About page: a portrait, a role line and a short bio. Change the words freely.
+ABOUT_DIR = ROOT / "about"
+PORTRAIT = ("assets/portrait.webp", 480, 480)
+ABOUT = {
+    "en": {
+        "role": "Security researcher.",
+        "bio": (
+            "I focus on web and mobile applications, with a particular interest in business logic flaws. "
+            "I report vulnerabilities through bug bounty programs and publish writeups on the ones worth "
+            "sharing, from discovery to fix."
+        ),
+    },
+    "ar": {
+        "role": "باحث أمني.",
+        "bio": (
+            "بركّز على تطبيقات الويب والموبايل، وعندي اهتمام خاص بثغرات الـ business logic. "
+            "ببلّغ عن الثغرات من خلال برامج الـ bug bounty، وبنشر هنا رايتابات عن اللي تستاهل تتشارك، "
+            "من اكتشافها لحد إصلاحها."
+        ),
+    },
+}
+# Bump when the About text or picture changes, so search engines see the new date.
+ABOUT_UPDATED = "2026-11-05"
 # The site's name in search results, and other names it may go by.
 SITE_ALTERNATE_NAMES = ["عادل صادق", "adel-sadek.net"]
 LOCALES = {"en": "en_US", "ar": "ar_EG"}
@@ -56,7 +79,8 @@ TEXT = {
         "older": "Older",
         "english": "English",
         "home_label": "Home",
-        "harbor": "Security videos",
+        "about": "About me",
+        "links": "About and videos",
     },
     "ar": {
         "all": "كل الـ writeups",
@@ -74,7 +98,8 @@ TEXT = {
         "older": "الأقدم",
         "english": "English",
         "home_label": "الرئيسية",
-        "harbor": "فيديوهات سيكيوريتي",
+        "about": "عنّي",
+        "links": "عنّي والفيديوهات",
     },
 }
 # Night sky behind every page: drifting clouds and a few stars. Pure CSS and SVG, no script.
@@ -914,20 +939,25 @@ HARBOR_SHIP = (
 )
 
 
-def harbor_link(lang: str) -> str:
-    """A quiet line under the tagline that leads to the video site."""
-    arrow = "←" if lang == "ar" else "→"
-    direction = "rtl" if lang == "ar" else "ltr"
+PERSON = (
+    '<svg class="harbor-ship" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
+    '<circle cx="12" cy="8" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/>'
+    '<path d="M4.5 20c.8-4 3.8-6 7.5-6s6.7 2 7.5 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'
+)
+
+
+def header_pills(lang: str) -> str:
+    """Two pills under the tagline: the About page, then the video site."""
+    words = TEXT[lang]
     return (
-        f'      <a class="harbor-link" href="{HARBOR_URL}" dir="{direction}">{HARBOR_SHIP}'
-        f'<span class="hl-name" lang="en" dir="ltr">HackHarbor</span>'
-        f'<span class="hl-sub" lang="{lang}">{html.escape(TEXT[lang]["harbor"])}</span>'
-        f'<span class="hl-arrow" aria-hidden="true">{arrow}</span></a>\n'
+        f'      <nav class="header-pills" aria-label="{html.escape(words["links"], quote=True)}">'
+        f'<a href="about/">{PERSON}{html.escape(words["about"])}</a>'
+        f'<a href="{HARBOR_URL}" lang="en" dir="ltr">{HARBOR_SHIP}HackHarbor</a></nav>\n'
     )
 
 
-def render_index(posts: list[Post], lang: str) -> str:
-    """Home page. English at the root, Arabic under ar/."""
+def render_index(posts: list[Post], lang: str = "en") -> str:
+    """Home page, English only at the root. Each writeup carries its own language switch."""
     words = TEXT[lang]
     prefix = "" if lang == "en" else "../"
     years = {post.date[:4] for post in posts}
@@ -967,17 +997,16 @@ def render_index(posts: list[Post], lang: str) -> str:
             )
         parts.append("      </ol>\n    </section>" if grouped else "    </ol>")
         listing = "\n".join(parts)
-    switch_href = "ar/" if lang == "en" else "../"
+    # The language switch lives inside each writeup, not on the home page.
     body = (
-        f'    <nav class="top-bar">{lang_switch(switch_href, lang)}</nav>\n'
         f'    <header>\n      <h1 class="name"><a href="./" aria-label="{html.escape(NAMES[lang], quote=True)}">'
         f"{avatar_img(prefix, True, NAMES[lang])}</a></h1>\n"
         f'      <p class="tagline">{html.escape(TAGLINE[lang])}</p>\n'
-        f"{harbor_link(lang)}"
+        f"{header_pills(lang)}"
         f"    </header>\n{listing}"
     )
     base = site_url()
-    urls = {"en": base, "ar": base + "ar/"}
+    urls = {"en": base}
     description = HOME_DESCRIPTION[lang]
     title = f"{NAMES[lang]} — {TAGLINE[lang].rstrip('.')}"
     tags = social_tags(title, description, urls[lang], lang=lang) + alternate_tags(urls)
@@ -1135,7 +1164,7 @@ def render_post(post: Post, planned: list[tuple[Path, Path]], newer: Post | None
         data["image"] = image
     tags += ld_json(data)
 
-    home_href = "../../" if lang == "en" else "../../ar/"
+    home_href = "../../"
     switch = ""
     if has_other:
         switch = lang_switch("ar.html" if lang == "en" else "./", lang)
@@ -1187,6 +1216,55 @@ def render_post(post: Post, planned: list[tuple[Path, Path]], newer: Post | None
         f"{end}"
     )
     return page(f"{post.title} — {NAMES[lang]}", body, "../../", tags, description, kind="page-post", lang=lang)
+
+
+def about_urls() -> dict[str, str]:
+    base = site_url()
+    return {"en": base + "about/", "ar": base + "ar/about/"}
+
+
+def render_about(lang: str) -> str:
+    """The About page. English at about/, Arabic at ar/about/. Both sit two folders below the root."""
+    words = TEXT[lang]
+    prefix = "../" if lang == "en" else "../../"
+    home_href = prefix
+    switch_href = "../ar/about/" if lang == "en" else "../../about/"
+    portrait = prefix + PORTRAIT[0]
+    text = ABOUT[lang]
+    body = (
+        f'    <nav class="crumbs about-crumbs" aria-label="{html.escape(words["home_label"], quote=True)}">'
+        f'<a class="home" href="{home_href}">{avatar_img(prefix, False, NAMES[lang])}'
+        f'<span class="crumb-text"><span aria-hidden="true">{words["back"]}</span> {html.escape(words["all"])}</span></a>'
+        f"{lang_switch(switch_href, lang)}</nav>\n"
+        '    <main class="about">\n'
+        f'      <figure class="portrait"><img class="portrait-img" src="{html.escape(portrait, quote=True)}" '
+        f'alt="{html.escape(NAMES[lang], quote=True)}" width="{PORTRAIT[1]}" height="{PORTRAIT[2]}"></figure>\n'
+        f"      <h1>{html.escape(NAMES[lang])}</h1>\n"
+        f'      <p class="role">{html.escape(text["role"])}</p>\n'
+        f'      <p class="bio">{html.escape(text["bio"])}</p>\n'
+        "    </main>"
+    )
+    urls = about_urls()
+    title = f"{words['about']} — {NAMES[lang]}"
+    description = text["bio"]
+    tags = social_tags(title, description, urls[lang], lang=lang) + alternate_tags(urls)
+    tags += ld_json({
+        "@context": "https://schema.org",
+        "@type": "ProfilePage",
+        "url": urls[lang],
+        "inLanguage": "ar-EG" if lang == "ar" else "en",
+        "dateModified": ABOUT_UPDATED,
+        "mainEntity": {
+            "@type": "Person",
+            "name": AUTHOR,
+            "alternateName": NAMES["ar"],
+            "jobTitle": ABOUT["en"]["role"].rstrip("."),
+            "description": ABOUT["en"]["bio"],
+            "image": site_url() + PORTRAIT[0],
+            "url": site_url(),
+        },
+    })
+    return page(title, body, prefix, tags, description, kind="page-about", lang=lang)
 
 
 def reset_dir(folder: Path) -> None:
@@ -1260,8 +1338,9 @@ def render_sitemap(posts: list[Post]) -> str:
         return f"  <url>\n    <loc>{html.escape(loc)}</loc>\n    <lastmod>{lastmod}</lastmod>\n{links}  </url>\n"
 
     newest = posts[0].date if posts else dt.date.today().isoformat()
-    homes = {"en": base, "ar": base + "ar/"}
-    out = [entry(homes["en"], newest, homes), entry(homes["ar"], newest, homes)]
+    out = [entry(base, newest, {})]
+    abouts = about_urls()
+    out += [entry(abouts["en"], ABOUT_UPDATED, abouts), entry(abouts["ar"], ABOUT_UPDATED, abouts)]
     for post in posts:
         urls = {"en": base + post_url(post, "en")}
         if post.translation:
@@ -1341,6 +1420,9 @@ def audit_html(page_html: str, prefix: str) -> None:
     for src in re.findall(r'<img class="avatar" src="([^"]*)"', rest):
         if src != avatar:
             raise BuildError("refusing an avatar that is not the site's own picture")
+    for src in re.findall(r'<img class="portrait-img" src="([^"]*)"', rest):
+        if src != prefix + PORTRAIT[0]:
+            raise BuildError("refusing a portrait that is not the site's own picture")
     for target in re.findall(r'popovertarget="([^"]*)"', rest):
         if not re.fullmatch(r"shot-\d+", target):
             raise BuildError("refusing a popover that is not a picture")
@@ -1397,12 +1479,14 @@ def build_site() -> int:
             except BuildError as exc:
                 raise BuildError(f"{post.translation.source.name}: {exc}") from exc
             pages[POSTS / post.slug / "ar.html"] = arabic
-    home = render_index(posts, "en")
-    home_ar = render_index(posts, "ar")
+    home = render_index(posts)
     missing = render_missing()
     audit_html(home, "")
-    audit_html(home_ar, "../")
     audit_html(missing, site_path())
+    about = render_about("en")
+    about_ar = render_about("ar")
+    audit_html(about, "../")
+    audit_html(about_ar, "../../")
     reset_dir(POSTS)
     reset_dir(AR_HOME)
     for src, dest in planned:
@@ -1412,7 +1496,10 @@ def build_site() -> int:
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(page_html, encoding="utf-8")
     (ROOT / "index.html").write_text(home, encoding="utf-8")
-    (AR_HOME / "index.html").write_text(home_ar, encoding="utf-8")
+    reset_dir(ABOUT_DIR)
+    (ABOUT_DIR / "index.html").write_text(about, encoding="utf-8")
+    (AR_HOME / "about").mkdir()
+    (AR_HOME / "about" / "index.html").write_text(about_ar, encoding="utf-8")
     (ROOT / "404.html").write_text(missing, encoding="utf-8")
     (ROOT / "feed.xml").write_text(render_feed(posts), encoding="utf-8")
     (ROOT / "sitemap.xml").write_text(render_sitemap(posts), encoding="utf-8")

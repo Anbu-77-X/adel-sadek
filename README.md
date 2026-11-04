@@ -30,7 +30,11 @@ writeups/2026-10-30-negative-cart-totals.md
 writeups/2026-10-30-negative-cart-totals.ar.md
 ```
 
-It has its own `title:` and `description:` and uses the same Markdown. The build gives it the right-to-left layout, keeps code left-to-right, keeps amounts like −€477,673.13 in order, links the two pages to each other, and lists it on the Arabic home page (`ar/`).
+It has its own `title:` and `description:` and uses the same Markdown. The build gives it the right-to-left layout, keeps code left-to-right, keeps amounts like −€477,673.13 in order, and links the two pages to each other. The home page is English only; a reader switches language inside the writeup.
+
+## About page
+
+`about/` and `ar/about/` show the portrait, a role line and a short bio. The words live in `ABOUT` near the top of `build.py`, and the picture is `assets/portrait.webp` (480×480). Change either, bump `ABOUT_UPDATED`, and run `python3 build.py`. The home page links to it from the "About me" pill, beside the HackHarbor pill under the tagline. The home page has no language switch; each writeup carries its own.
 
 ## What a writeup page gets
 
