@@ -19,7 +19,6 @@ from urllib.parse import unquote, urlparse
 ROOT = Path(__file__).resolve().parent
 WRITEUPS = ROOT / "writeups"
 POSTS = ROOT / "posts"
-AR_HOME = ROOT / "ar"  # holds only the Arabic About page; the home page is English only
 AUTHOR = "Adel Sadek"
 # Where GitHub Pages serves the site. A domain in domain.txt or CNAME takes over.
 PAGES_URL = "https://anbu-77-x.github.io/adel-sadek/"
@@ -44,14 +43,6 @@ ABOUT = {
             "I focus on web and mobile applications, with a particular interest in business logic flaws. "
             "I report vulnerabilities through bug bounty programs and publish writeups on the ones worth "
             "sharing, from discovery to fix."
-        ),
-    },
-    "ar": {
-        "role": "باحث أمني.",
-        "bio": (
-            "بركّز على تطبيقات الويب والموبايل، وعندي اهتمام خاص بثغرات الـ business logic. "
-            "ببلّغ عن الثغرات من خلال برامج الـ bug bounty، وبنشر هنا رايتابات عن اللي تستاهل تتشارك، "
-            "من اكتشافها لحد إصلاحها."
         ),
     },
 }
@@ -1205,12 +1196,13 @@ def render_post(post: Post, planned: list[tuple[Path, Path]], newer: Post | None
     time_dir = ' dir="ltr"' if lang == "ar" else ""
     article_dir = "" if lang == "ar" else ' dir="auto"'
     body = (
-        f'    <nav class="crumbs" aria-label="{html.escape(words["home_label"], quote=True)}">'
+        f'    <nav class="crumbs crumbs-row" aria-label="{html.escape(words["home_label"], quote=True)}">'
         f'<a class="home" href="{home_href}">{avatar_img("../../", False, NAMES[lang])}'
-        f'<span class="crumb-text"><span aria-hidden="true">{words["back"]}</span> {html.escape(words["all"])}</span></a></nav>\n'
+        f'<span class="crumb-text"><span aria-hidden="true">{words["back"]}</span> {html.escape(words["all"])}</span></a>'
+        f'{switch}</nav>\n'
         f'    <h1 class="post-title" dir="auto"><span data-vt="vt-{html.escape(post.slug, quote=True)}">{html.escape(post.title)}</span></h1>\n'
         f'    <p class="meta"><time datetime="{html.escape(post.date)}"{time_dir}>{html.escape(post.date)}</time>'
-        f'<span class="dot" aria-hidden="true">·</span><span class="read">{html.escape(minutes)}</span>{switch}</p>\n'
+        f'<span class="dot" aria-hidden="true">·</span><span class="read">{html.escape(minutes)}</span></p>\n'
         f"{contents}"
         f"    <article{article_dir}>\n{article}\n    </article>\n"
         f"{end}"
@@ -1218,24 +1210,21 @@ def render_post(post: Post, planned: list[tuple[Path, Path]], newer: Post | None
     return page(f"{post.title} — {NAMES[lang]}", body, "../../", tags, description, kind="page-post", lang=lang)
 
 
-def about_urls() -> dict[str, str]:
-    base = site_url()
-    return {"en": base + "about/", "ar": base + "ar/about/"}
+def about_url() -> str:
+    return site_url() + "about/"
 
 
-def render_about(lang: str) -> str:
-    """The About page. English at about/, Arabic at ar/about/. Both sit two folders below the root."""
+def render_about(lang: str = "en") -> str:
+    """The About page, English only, at about/. Only the writeups switch language."""
     words = TEXT[lang]
-    prefix = "../" if lang == "en" else "../../"
+    prefix = "../"
     home_href = prefix
-    switch_href = "../ar/about/" if lang == "en" else "../../about/"
     portrait = prefix + PORTRAIT[0]
     text = ABOUT[lang]
     body = (
-        f'    <nav class="crumbs about-crumbs" aria-label="{html.escape(words["home_label"], quote=True)}">'
+        f'    <nav class="crumbs" aria-label="{html.escape(words["home_label"], quote=True)}">'
         f'<a class="home" href="{home_href}">{avatar_img(prefix, False, NAMES[lang])}'
-        f'<span class="crumb-text"><span aria-hidden="true">{words["back"]}</span> {html.escape(words["all"])}</span></a>'
-        f"{lang_switch(switch_href, lang)}</nav>\n"
+        f'<span class="crumb-text"><span aria-hidden="true">{words["back"]}</span> {html.escape(words["all"])}</span></a></nav>\n'
         '    <main class="about">\n'
         f'      <figure class="portrait"><img class="portrait-img" src="{html.escape(portrait, quote=True)}" '
         f'alt="{html.escape(NAMES[lang], quote=True)}" width="{PORTRAIT[1]}" height="{PORTRAIT[2]}"></figure>\n'
@@ -1244,15 +1233,15 @@ def render_about(lang: str) -> str:
         f'      <p class="bio">{html.escape(text["bio"])}</p>\n'
         "    </main>"
     )
-    urls = about_urls()
+    url = about_url()
     title = f"{words['about']} — {NAMES[lang]}"
     description = text["bio"]
-    tags = social_tags(title, description, urls[lang], lang=lang) + alternate_tags(urls)
+    tags = social_tags(title, description, url, lang=lang)
     tags += ld_json({
         "@context": "https://schema.org",
         "@type": "ProfilePage",
-        "url": urls[lang],
-        "inLanguage": "ar-EG" if lang == "ar" else "en",
+        "url": url,
+        "inLanguage": "en",
         "dateModified": ABOUT_UPDATED,
         "mainEntity": {
             "@type": "Person",
@@ -1339,8 +1328,7 @@ def render_sitemap(posts: list[Post]) -> str:
 
     newest = posts[0].date if posts else dt.date.today().isoformat()
     out = [entry(base, newest, {})]
-    abouts = about_urls()
-    out += [entry(abouts["en"], ABOUT_UPDATED, abouts), entry(abouts["ar"], ABOUT_UPDATED, abouts)]
+    out.append(entry(about_url(), ABOUT_UPDATED, {}))
     for post in posts:
         urls = {"en": base + post_url(post, "en")}
         if post.translation:
@@ -1483,12 +1471,9 @@ def build_site() -> int:
     missing = render_missing()
     audit_html(home, "")
     audit_html(missing, site_path())
-    about = render_about("en")
-    about_ar = render_about("ar")
+    about = render_about()
     audit_html(about, "../")
-    audit_html(about_ar, "../../")
     reset_dir(POSTS)
-    reset_dir(AR_HOME)
     for src, dest in planned:
         dest.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(src, dest)
@@ -1498,8 +1483,10 @@ def build_site() -> int:
     (ROOT / "index.html").write_text(home, encoding="utf-8")
     reset_dir(ABOUT_DIR)
     (ABOUT_DIR / "index.html").write_text(about, encoding="utf-8")
-    (AR_HOME / "about").mkdir()
-    (AR_HOME / "about" / "index.html").write_text(about_ar, encoding="utf-8")
+    old_ar = ROOT / "ar"
+    if old_ar.is_dir() and not old_ar.is_symlink():
+        # The Arabic home and Arabic About page are gone; only writeups have Arabic versions now.
+        shutil.rmtree(old_ar)
     (ROOT / "404.html").write_text(missing, encoding="utf-8")
     (ROOT / "feed.xml").write_text(render_feed(posts), encoding="utf-8")
     (ROOT / "sitemap.xml").write_text(render_sitemap(posts), encoding="utf-8")

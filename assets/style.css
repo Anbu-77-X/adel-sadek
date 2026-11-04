@@ -758,11 +758,6 @@ header {
   font-size: 0.82rem;
 }
 
-.meta .lang-btn {
-  margin-inline-start: 0.35rem;
-  font-family: var(--serif);
-}
-
 /* Contents: closed by default, so the picture stays near the top. */
 .toc {
   margin: 0 0 1.4rem;
@@ -1870,7 +1865,7 @@ html[dir="rtl"] body {
 }
 
 /* ---------- About: one portrait, a few lines ---------- */
-.about-crumbs {
+.crumbs-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
