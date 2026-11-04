@@ -19,7 +19,7 @@ from urllib.parse import unquote, urlparse
 ROOT = Path(__file__).resolve().parent
 WRITEUPS = ROOT / "writeups"
 POSTS = ROOT / "posts"
-AR_HOME = ROOT / "ar"
+AR_HOME = ROOT / "ar"  # holds only the Arabic About page; the home page is English only
 AUTHOR = "Adel Sadek"
 # Where GitHub Pages serves the site. A domain in domain.txt or CNAME takes over.
 PAGES_URL = "https://anbu-77-x.github.io/adel-sadek/"
@@ -956,8 +956,8 @@ def header_pills(lang: str) -> str:
     )
 
 
-def render_index(posts: list[Post], lang: str) -> str:
-    """Home page. English at the root, Arabic under ar/."""
+def render_index(posts: list[Post], lang: str = "en") -> str:
+    """Home page, English only at the root. Each writeup carries its own language switch."""
     words = TEXT[lang]
     prefix = "" if lang == "en" else "../"
     years = {post.date[:4] for post in posts}
@@ -1006,7 +1006,7 @@ def render_index(posts: list[Post], lang: str) -> str:
         f"    </header>\n{listing}"
     )
     base = site_url()
-    urls = {"en": base, "ar": base + "ar/"}
+    urls = {"en": base}
     description = HOME_DESCRIPTION[lang]
     title = f"{NAMES[lang]} — {TAGLINE[lang].rstrip('.')}"
     tags = social_tags(title, description, urls[lang], lang=lang) + alternate_tags(urls)
@@ -1164,7 +1164,7 @@ def render_post(post: Post, planned: list[tuple[Path, Path]], newer: Post | None
         data["image"] = image
     tags += ld_json(data)
 
-    home_href = "../../" if lang == "en" else "../../ar/"
+    home_href = "../../"
     switch = ""
     if has_other:
         switch = lang_switch("ar.html" if lang == "en" else "./", lang)
@@ -1227,7 +1227,7 @@ def render_about(lang: str) -> str:
     """The About page. English at about/, Arabic at ar/about/. Both sit two folders below the root."""
     words = TEXT[lang]
     prefix = "../" if lang == "en" else "../../"
-    home_href = "../"
+    home_href = prefix
     switch_href = "../ar/about/" if lang == "en" else "../../about/"
     portrait = prefix + PORTRAIT[0]
     text = ABOUT[lang]
@@ -1338,8 +1338,7 @@ def render_sitemap(posts: list[Post]) -> str:
         return f"  <url>\n    <loc>{html.escape(loc)}</loc>\n    <lastmod>{lastmod}</lastmod>\n{links}  </url>\n"
 
     newest = posts[0].date if posts else dt.date.today().isoformat()
-    homes = {"en": base, "ar": base + "ar/"}
-    out = [entry(homes["en"], newest, homes), entry(homes["ar"], newest, homes)]
+    out = [entry(base, newest, {})]
     abouts = about_urls()
     out += [entry(abouts["en"], ABOUT_UPDATED, abouts), entry(abouts["ar"], ABOUT_UPDATED, abouts)]
     for post in posts:
@@ -1480,11 +1479,9 @@ def build_site() -> int:
             except BuildError as exc:
                 raise BuildError(f"{post.translation.source.name}: {exc}") from exc
             pages[POSTS / post.slug / "ar.html"] = arabic
-    home = render_index(posts, "en")
-    home_ar = render_index(posts, "ar")
+    home = render_index(posts)
     missing = render_missing()
     audit_html(home, "")
-    audit_html(home_ar, "../")
     audit_html(missing, site_path())
     about = render_about("en")
     about_ar = render_about("ar")
@@ -1499,7 +1496,6 @@ def build_site() -> int:
         dest.parent.mkdir(parents=True, exist_ok=True)
         dest.write_text(page_html, encoding="utf-8")
     (ROOT / "index.html").write_text(home, encoding="utf-8")
-    (AR_HOME / "index.html").write_text(home_ar, encoding="utf-8")
     reset_dir(ABOUT_DIR)
     (ABOUT_DIR / "index.html").write_text(about, encoding="utf-8")
     (AR_HOME / "about").mkdir()

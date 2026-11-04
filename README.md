@@ -30,7 +30,7 @@ writeups/2026-10-30-negative-cart-totals.md
 writeups/2026-10-30-negative-cart-totals.ar.md
 ```
 
-It has its own `title:` and `description:` and uses the same Markdown. The build gives it the right-to-left layout, keeps code left-to-right, keeps amounts like −€477,673.13 in order, links the two pages to each other, and lists it on the Arabic home page (`ar/`).
+It has its own `title:` and `description:` and uses the same Markdown. The build gives it the right-to-left layout, keeps code left-to-right, keeps amounts like −€477,673.13 in order, and links the two pages to each other. The home page is English only; a reader switches language inside the writeup.
 
 ## About page
 

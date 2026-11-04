@@ -858,6 +858,8 @@ header {
   justify-content: center;
   gap: 0.6rem;
   margin: 1.4rem 0 0;
+  /* Nudged a little to the right, to sit under the moon by eye. */
+  padding-inline-start: 1rem;
 }
 
 .header-pills a {
