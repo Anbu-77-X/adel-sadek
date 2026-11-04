@@ -939,13 +939,19 @@ HARBOR_SHIP = (
 )
 
 
-def header_links(lang: str) -> str:
-    """Two quiet links under the tagline: the About page, then the video site."""
+PERSON = (
+    '<svg class="harbor-ship" viewBox="0 0 24 24" aria-hidden="true" focusable="false">'
+    '<circle cx="12" cy="8" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/>'
+    '<path d="M4.5 20c.8-4 3.8-6 7.5-6s6.7 2 7.5 6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'
+)
+
+
+def header_pills(lang: str) -> str:
+    """Two pills under the tagline: the About page, then the video site."""
     words = TEXT[lang]
     return (
-        f'      <nav class="header-links" aria-label="{html.escape(words["links"], quote=True)}">'
-        f'<a href="about/">{html.escape(words["about"])}</a>'
-        '<span class="header-bar" aria-hidden="true">|</span>'
+        f'      <nav class="header-pills" aria-label="{html.escape(words["links"], quote=True)}">'
+        f'<a href="about/">{PERSON}{html.escape(words["about"])}</a>'
         f'<a href="{HARBOR_URL}" lang="en" dir="ltr">{HARBOR_SHIP}HackHarbor</a></nav>\n'
     )
 
@@ -991,13 +997,12 @@ def render_index(posts: list[Post], lang: str) -> str:
             )
         parts.append("      </ol>\n    </section>" if grouped else "    </ol>")
         listing = "\n".join(parts)
-    switch_href = "ar/" if lang == "en" else "../"
+    # The language switch lives inside each writeup, not on the home page.
     body = (
-        f'    <nav class="top-bar">{lang_switch(switch_href, lang)}</nav>\n'
         f'    <header>\n      <h1 class="name"><a href="./" aria-label="{html.escape(NAMES[lang], quote=True)}">'
         f"{avatar_img(prefix, True, NAMES[lang])}</a></h1>\n"
         f'      <p class="tagline">{html.escape(TAGLINE[lang])}</p>\n'
-        f"{header_links(lang)}"
+        f"{header_pills(lang)}"
         f"    </header>\n{listing}"
     )
     base = site_url()
