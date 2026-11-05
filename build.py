@@ -1210,6 +1210,11 @@ def render_post(post: Post, planned: list[tuple[Path, Path]], newer: Post | None
     return page(f"{post.title} — {NAMES[lang]}", body, "../../", tags, description, kind="page-post", lang=lang)
 
 
+def portrait_src(prefix: str) -> str:
+    """The portrait's address, with a fingerprint so browsers fetch a new picture as soon as it changes."""
+    return f"{prefix}{PORTRAIT[0]}?v={asset_version(Path(PORTRAIT[0]).name)}"
+
+
 def about_url() -> str:
     return site_url() + "about/"
 
@@ -1219,7 +1224,7 @@ def render_about(lang: str = "en") -> str:
     words = TEXT[lang]
     prefix = "../"
     home_href = prefix
-    portrait = prefix + PORTRAIT[0]
+    portrait = portrait_src(prefix)
     text = ABOUT[lang]
     body = (
         f'    <nav class="crumbs" aria-label="{html.escape(words["home_label"], quote=True)}">'
@@ -1409,7 +1414,7 @@ def audit_html(page_html: str, prefix: str) -> None:
         if src != avatar:
             raise BuildError("refusing an avatar that is not the site's own picture")
     for src in re.findall(r'<img class="portrait-img" src="([^"]*)"', rest):
-        if src != prefix + PORTRAIT[0]:
+        if src != portrait_src(prefix):
             raise BuildError("refusing a portrait that is not the site's own picture")
     for target in re.findall(r'popovertarget="([^"]*)"', rest):
         if not re.fullmatch(r"shot-\d+", target):
