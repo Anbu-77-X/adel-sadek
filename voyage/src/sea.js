@@ -3,7 +3,7 @@ import { NOISE, SKY_FN, C, v3 } from "./glsl.js";
 
 // Stylised water on a flat plane: tone bands for the swell, short horizontal glints that keep a
 // readable size at every distance, a glitter path under the moon, and foam around the ship.
-export function makeSea(moonDir, pxRatio, lite) {
+export function makeSea(moonDir, pxRatio) {
   const mat = new THREE.ShaderMaterial({
     uniforms: {
       uTime: { value: 0 },
@@ -19,7 +19,6 @@ export function makeSea(moonDir, pxRatio, lite) {
       void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
     fragmentShader: /* glsl */ `
       precision highp float;
-      ${lite ? "#define LITE" : ""}
       uniform float uTime; uniform vec3 uCam; uniform float uChart; uniform float uPx;
       uniform vec4 uShip; uniform vec4 uIsles[3];
       varying vec3 vW;
@@ -54,14 +53,10 @@ export function makeSea(moonDir, pxRatio, lite) {
         float cx0 = exp2(ix), cx1 = cx0*2.0, cz0 = exp2(iz), cz1 = cz0*2.0;
         float s = ix*3.0 + iz*5.0;
         float a = dashCell(p, vec2(cx0, cz0), t, density, s);
-        float c = dashCell(p, vec2(cx0, cz1), t, density, s + 5.0);
-        #ifdef LITE
-        return mix(a, c, fz);
-        #else
         float b = dashCell(p, vec2(cx1, cz0), t, density, s + 3.0);
+        float c = dashCell(p, vec2(cx0, cz1), t, density, s + 5.0);
         float d = dashCell(p, vec2(cx1, cz1), t, density, s + 8.0);
         return mix(mix(a, b, fx), mix(c, d, fx), fz);
-        #endif
       }
 
       float swell(vec2 p, float t){
@@ -86,11 +81,7 @@ export function makeSea(moonDir, pxRatio, lite) {
         col = mix(col, ${v3("#16255a")}, 0.35*uChart);
 
         // swell, as two flat tone steps
-        #ifdef LITE
-        float s = swell(p, t);
-        #else
         float s = swell(p, t) + 0.28*(vnoise(p*0.045 + t*0.02) - 0.5);
-        #endif
         float w = max(fwidth(s)*1.2, 0.012);
         float tone = smoothstep(0.16 - w, 0.16 + w, s)*0.5 + smoothstep(0.52 - w, 0.52 + w, s)*0.5;
         float far = exp(-dist/900.0);
@@ -120,38 +111,28 @@ export function makeSea(moonDir, pxRatio, lite) {
         float lzs = uShip.w*d2.x + uShip.z*d2.y;
         float e = length(vec2(lxs/3.9, (lzs - 0.6)/14.6));
         col *= 1.0 - 0.42*(1.0 - smoothstep(0.75, 1.55, e));
-        // the noise is only worked out where foam can be: at the hull and inside the wake
-        float foam = 0.0;
-        if(e < 1.6){
-          float ringN = vnoise(vec2(atan(lxs, lzs)*7.0 + t*0.5, e*7.0 - t*0.7));
-          foam += smoothstep(0.95, 1.02, e) * (1.0 - smoothstep(1.07, 1.30, e)) * smoothstep(0.30, 0.48, ringN);
-          foam += (1.0 - smoothstep(0.0, 5.0, length(vec2(lxs*1.4, lzs - 13.5)))) * smoothstep(0.35, 0.5, vnoise(vec2(lxs*1.3, lzs*1.1 - t*2.0)));
-        }
+        float ringN = vnoise(vec2(atan(lxs, lzs)*7.0 + t*0.5, e*7.0 - t*0.7));
+        float ring = smoothstep(0.95, 1.02, e) * (1.0 - smoothstep(1.07, 1.30, e)) * smoothstep(0.30, 0.48, ringN);
+        float bow = (1.0 - smoothstep(0.0, 5.0, length(vec2(lxs*1.4, lzs - 13.5)))) * smoothstep(0.35, 0.5, vnoise(vec2(lxs*1.3, lzs*1.1 - t*2.0)));
         float aft = -lzs - 12.0;
-        if(aft > 0.0 && aft < 330.0 && abs(lxs) < 5.0 + aft*0.3){
-          float armW = 3.2 + aft*0.26;
-          float armD = abs(abs(lxs) - armW);
-          float arm = (1.0 - smoothstep(0.35, 1.3 + aft*0.02, armD)) * smoothstep(0.0, 5.0, aft) * exp(-aft/85.0);
-          arm *= smoothstep(0.30, 0.52, vnoise(vec2(aft*0.33 - t*1.4, sign(lxs)*3.0 + 1.0)));
-          float churn = (1.0 - smoothstep(armW*0.25, armW*0.85, abs(lxs))) * exp(-aft/38.0) * smoothstep(0.0, 3.0, aft);
-          churn *= smoothstep(0.48, 0.62, vnoise(vec2(lxs*0.9, aft*0.55 - t*1.8)));
-          foam += arm + churn*0.75;
-        }
-        col = mix(col, FOAM, clamp(foam, 0.0, 1.0)*0.88);
+        float armW = 3.2 + aft*0.26;
+        float armD = abs(abs(lxs) - armW);
+        float arm = (1.0 - smoothstep(0.35, 1.3 + aft*0.02, armD)) * smoothstep(0.0, 5.0, aft) * exp(-aft/85.0);
+        arm *= smoothstep(0.30, 0.52, vnoise(vec2(aft*0.33 - t*1.4, sign(lxs)*3.0 + 1.0)));
+        float churn = (1.0 - smoothstep(armW*0.25, armW*0.85, abs(lxs))) * exp(-aft/38.0) * smoothstep(0.0, 3.0, aft);
+        churn *= smoothstep(0.48, 0.62, vnoise(vec2(lxs*0.9, aft*0.55 - t*1.8)));
+        float foam = clamp(ring + bow + arm + churn*0.75, 0.0, 1.0);
+        col = mix(col, FOAM, foam*0.88);
 
         // shallows around the islands
         for(int i = 0; i < 3; i++){
           vec4 isle = uIsles[i];
           if(isle.z > 0.0){
             float dI = length(p - isle.xy) / isle.z;
-            if(dI < 1.75){
-              float sh = 1.0 - smoothstep(0.9, 1.75, dI);
-              col = mix(col, ${v3("#3a4a98")}, sh*0.42);
-              if(dI < 1.36){
-                float rip = smoothstep(0.4, 0.5, vnoise(vec2(atan(p.x - isle.x, p.y - isle.y)*9.0, dI*9.0 - t*0.4)));
-                col = mix(col, FOAM, 0.35*rip*smoothstep(1.35, 1.2, dI)*smoothstep(0.95, 1.1, dI));
-              }
-            }
+            float sh = 1.0 - smoothstep(0.9, 1.75, dI);
+            col = mix(col, ${v3("#3a4a98")}, sh*0.42);
+            float rip = smoothstep(0.4, 0.5, vnoise(vec2(atan(p.x - isle.x, p.y - isle.y)*9.0, dI*9.0 - t*0.4)));
+            col = mix(col, FOAM, 0.35*rip*smoothstep(1.35, 1.2, dI)*smoothstep(0.95, 1.1, dI));
           }
         }
 

@@ -137,7 +137,7 @@ export function paintFog(seed, size = 512) {
   return tex;
 }
 
-export function makeClouds(seedBase = 7, lite = false) {
+export function makeClouds(seedBase = 7) {
   const group = new THREE.Group();
   const r = rng(seedBase * 977);
   const items = [];
@@ -150,19 +150,17 @@ export function makeClouds(seedBase = 7, lite = false) {
   };
   const deg = Math.PI / 180;
   // far bank, hugging the horizon
-  // a phone gets a quieter sky: half the bank, three clouds in the middle, none overhead
-  const size = lite ? { w: 512, h: 256 } : {};
-  const far = [0, 1, 2, 3].map((i) => paintCloud(100 + i * 13 + seedBase, { lobes: 9, haze: 0.5, tall: 0.6, ...size }));
-  const bank = lite ? [-52, -24, 21, 47, 74] : [-64, -47, -31, -19, 15, 27, 44, 61, 80, -82];
+  const far = [0, 1, 2, 3].map((i) => paintCloud(100 + i * 13 + seedBase, { lobes: 9, haze: 0.5, tall: 0.6 }));
+  const bank = [-64, -47, -31, -19, 15, 27, 44, 61, 80, -82];
   bank.forEach((a, i) => add(far[i % 4], a * deg, (1.0 + 2.0 * r()) * deg, (15 + 9 * r()) * deg, 3400, 0.004 + 0.003 * r(), 0.95));
   // middle layer
-  const midT = [0, 1, 2, 3].map((i) => paintCloud(300 + i * 29 + seedBase, { lobes: 7, haze: 0.2, lightX: i % 2 ? -0.5 : 0.5, ...size }));
-  (lite ? [[-9, 17.5, 15], [11, 9.5, 13], [-34, 10, 24], [40, 14, 22]] : [[-38, 9, 30], [-15, 5.2, 18], [23, 12, 26], [52, 7, 30], [-70, 13, 34], [84, 10, 28]]).forEach(([a, e, w], i) =>
+  const midT = [0, 1, 2, 3].map((i) => paintCloud(300 + i * 29 + seedBase, { lobes: 7, haze: 0.2, lightX: i % 2 ? -0.5 : 0.5 }));
+  [[-38, 9, 30], [-15, 5.2, 18], [23, 12, 26], [52, 7, 30], [-70, 13, 34], [84, 10, 28]].forEach(([a, e, w], i) =>
     add(midT[i % 4], a * deg, e * deg, w * deg, 2500, 0.007 + 0.004 * r())
   );
   // near, high clouds that frame the top of the picture
-  const nearT = lite ? [] : [0, 1, 2].map((i) => paintCloud(700 + i * 31 + seedBase, { lobes: 6, tall: 1.25, lightX: i === 1 ? -0.6 : 0.6 }));
-  (lite ? [] : [[-34, 27, 46], [38, 31, 52], [2, 44, 60], [-78, 24, 44], [80, 22, 40]]).forEach(([a, e, w], i) =>
+  const nearT = [0, 1, 2].map((i) => paintCloud(700 + i * 31 + seedBase, { lobes: 6, tall: 1.25, lightX: i === 1 ? -0.6 : 0.6 }));
+  [[-34, 27, 46], [38, 31, 52], [2, 44, 60], [-78, 24, 44], [80, 22, 40]].forEach(([a, e, w], i) =>
     add(nearT[i % 3], a * deg, e * deg, w * deg, 1700, 0.012 + 0.005 * r())
   );
 
