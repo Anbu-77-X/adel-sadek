@@ -107,11 +107,13 @@ SKY = (
 )
 # The home page is a different stage: a WebGL sea drawn by assets/voyage.js, with its own stylesheet.
 SEA = (
-    '  <canvas class="sea" data-scene="home" aria-hidden="true"></canvas>\n'
+    '  <canvas id="sea" aria-hidden="true"></canvas>\n'
     '  <div class="veil" aria-hidden="true"></div>\n'
 )
 HOME = {
-    "title": "Bug bounty writeups",
+    "eyebrow": "Web · Mobile · Business logic",
+    "title": ("Bug bounty", "writeups"),
+    "lede": "Real bugs, the requests that found them, and how to fix them.",
     "latest": "Latest writeup",
     "open": "Open the chart",
     "chart_eyebrow": "Writeups",
@@ -120,6 +122,7 @@ HOME = {
     "fog": "Uncharted",
     "here": "You are here",
     "back": "Back to sea",
+    "more": "More",
 }
 # Places on the chart, newest writeup first. "main" is the island with the light.
 SEA_SPOTS = ("main", "a", "b")
@@ -910,22 +913,11 @@ def image_size(path: Path) -> tuple[int, int] | None:
 
 
 def page(title: str, body: str, prefix: str, head_extra: str = "", description: str = "",
-         kind: str = "page-home", lang: str = "en", scene: bool = False, band: str = "") -> str:
-    """One page. A scene page (the home page) swaps the sky, stylesheet and script for the sea's own.
-
-    band puts a strip of that sea at the top of an ordinary page: "post" or "about".
-    """
+         kind: str = "page-home", lang: str = "en", scene: bool = False) -> str:
+    """One page. A scene page (the home page) swaps the sky, stylesheet and script for the sea's own."""
     sheet = "voyage.css" if scene else "style.css"
     css = f"{prefix}assets/{sheet}?v={asset_version(sheet)}"
-    scripts = script_tag(prefix, "voyage.js") if scene else script_tag(prefix)
-    strip = ""
-    if band and not scene:
-        kind += " has-band"
-        scripts += script_tag(prefix, "voyage.js")
-        strip = f'  <div class="sea-band" aria-hidden="true"><canvas data-scene="{html.escape(band, quote=True)}"></canvas></div>\n'
-        if band == "post":
-            strip += '  <div class="voyage-line" aria-hidden="true"><span class="wake"></span><span class="boat"></span></div>\n'
-    inner = SEA + body if scene else f'{SKY}{strip}  <div class="wrap" id="top">\n{body}\n  </div>'
+    inner = SEA + body if scene else f'{SKY}  <div class="wrap" id="top">\n{body}\n  </div>'
     description = description or f"{TAGLINE['en']} By {AUTHOR}."
     feed = f'  <link rel="alternate" type="application/atom+xml" title="{html.escape(AUTHOR)}" href="{prefix}feed.xml">\n'
     return f"""<!DOCTYPE html>
@@ -941,7 +933,7 @@ def page(title: str, body: str, prefix: str, head_extra: str = "", description: 
   <meta name="theme-color" content="{THEME_COLOR}">
   <meta name="color-scheme" content="dark">
   <link rel="stylesheet" href="{html.escape(css, quote=True)}">
-{scripts}{feed}{icon_links(prefix)}</head>
+{script_tag(prefix, "voyage.js" if scene else "site.js")}{feed}{icon_links(prefix)}</head>
 <body class="{kind}">
 {inner}
 </body>
@@ -1010,11 +1002,11 @@ def render_index(posts: list[Post], lang: str = "en") -> str:
         post = posts[0]
         figure = figure_of(post)
         latest = (
-            f'          <a class="latest fade d1" href="{esc(post_url(post, post.lang), quote=True)}">\n'
-            f'            <span class="k">{esc(HOME["latest"])} · {stamp(post)}</span>\n'
-            f'            <span class="t">{esc(post.title)}</span>\n'
-            + (f'            <span class="n">{esc(figure)}</span>\n' if figure else "")
-            + "          </a>\n"
+            f'        <a class="latest fade d2" href="{esc(post_url(post, post.lang), quote=True)}">\n'
+            f'          <span class="k">{esc(HOME["latest"])} · {stamp(post)}</span>\n'
+            f'          <span class="t">{esc(post.title)}</span>\n'
+            + (f'          <span class="n">{esc(figure)}</span>\n' if figure else "")
+            + "        </a>\n"
         )
     isles: list[str] = []
     for spot, post in zip(SEA_SPOTS, posts):
@@ -1064,12 +1056,15 @@ def render_index(posts: list[Post], lang: str = "en") -> str:
         "  </header>\n"
         '  <main class="voyage">\n'
         '    <section class="hero" aria-labelledby="title">\n'
+        '      <div class="title">\n'
+        f'        <p class="eyebrow fade">{esc(HOME["eyebrow"])}</p>\n'
+        f'        <h1 id="title"><span class="rise"><span>{esc(HOME["title"][0])}</span></span> '
+        f'<span class="rise d1"><span><em>{esc(HOME["title"][1])}</em></span></span></h1>\n'
+        f'        <p class="lede fade d1">{esc(HOME["lede"])}</p>\n'
+        "      </div>\n"
         '      <div class="dock">\n'
-        '        <div class="berth">\n'
-        f'          <h1 class="tagline fade" id="title">{esc(HOME["title"])}</h1>\n'
         f"{latest}"
-        "        </div>\n"
-        f'        <button class="cue fade d2" type="button" id="cue"><i>{arrow.format(d="M5 9l7 7 7-7")}</i>{esc(HOME["open"])}</button>\n'
+        f'        <button class="cue fade d3" type="button" id="cue"><i>{arrow.format(d="M5 9l7 7 7-7")}</i>{esc(HOME["open"])}</button>\n'
         "      </div>\n"
         "    </section>\n"
         '    <section class="chart" aria-labelledby="chart-h">\n'
@@ -1092,7 +1087,13 @@ def render_index(posts: list[Post], lang: str = "en") -> str:
         "    </section>\n"
         "  </main>\n"
         f"{log}"
-    ).rstrip("\n")
+        "  <footer>\n"
+        f'    <nav aria-label="{esc(HOME["more"], quote=True)}">'
+        f'<a href="about/">{esc(words["about"])}</a>'
+        f'<a href="{HARBOR_URL}" lang="en" dir="ltr">HackHarbor</a>'
+        '<a href="feed.xml">Feed</a></nav>\n'
+        "  </footer>"
+    )
     base = site_url()
     urls = {"en": base}
     description = HOME_DESCRIPTION[lang]
@@ -1305,7 +1306,7 @@ def render_post(post: Post, planned: list[tuple[Path, Path]], newer: Post | None
         f"    <article{article_dir}>\n{article}\n    </article>\n"
         f"{end}"
     )
-    return page(f"{post.title} — {NAMES[lang]}", body, "../../", tags, description, kind="page-post", lang=lang, band="post")
+    return page(f"{post.title} — {NAMES[lang]}", body, "../../", tags, description, kind="page-post", lang=lang)
 
 
 def portrait_src(prefix: str) -> str:
@@ -1356,7 +1357,7 @@ def render_about(lang: str = "en") -> str:
             "url": site_url(),
         },
     })
-    return page(title, body, prefix, tags, description, kind="page-about", lang=lang, band="about")
+    return page(title, body, prefix, tags, description, kind="page-about", lang=lang)
 
 
 def reset_dir(folder: Path) -> None:
@@ -1453,7 +1454,7 @@ _LD_BLOCK = re.compile(r'<script type="application/ld\+json">([^<]*)</script>')
 _SCRIPT_TAG = re.compile(r'<script src="([^"]*)" integrity="([^"]*)" defer></script>')
 
 
-def audit_html(page_html: str, prefix: str, scene: bool = False, band: bool = False) -> None:
+def audit_html(page_html: str, prefix: str, scene: bool = False) -> None:
     base = site_url()
     for block in _LD_BLOCK.findall(page_html):
         try:
@@ -1474,10 +1475,10 @@ def audit_html(page_html: str, prefix: str, scene: bool = False, band: bool = Fa
 
         walk(data)
     scripts = _SCRIPT_TAG.findall(page_html)
-    names = ["voyage.js"] if scene else ["site.js", "voyage.js"] if band else ["site.js"]
-    expected = [(f"{prefix}assets/{name}?v={asset_version(name)}", script_integrity(name)) for name in names]
-    if scripts != expected:
-        raise BuildError("the page must load exactly the site's own scripts, with their integrity hashes")
+    name = "voyage.js" if scene else "site.js"
+    expected = f"{prefix}assets/{name}?v={asset_version(name)}"
+    if scripts != [(expected, script_integrity(name))]:
+        raise BuildError("the page must load exactly the site's own script, with its integrity hash")
     rest = _SCRIPT_TAG.sub("", _LD_BLOCK.sub("", page_html))
     if re.search(r"<\s*(script|iframe|object|embed|form|base|style)\b", rest, re.I):
         raise BuildError("refusing to write a page with an active tag")
@@ -1561,13 +1562,13 @@ def build_site() -> int:
         newer = posts[position - 1] if position > 0 else None
         older = posts[position + 1] if position + 1 < len(posts) else None
         english = render_post(post, planned, newer, older)
-        audit_html(english, "../../", band=True)
+        audit_html(english, "../../")
         pages[POSTS / post.slug / "index.html"] = english
         if post.translation:
             post.translation.translation = post
             arabic = render_post(post.translation, planned, newer, older)
             try:
-                audit_html(arabic, "../../", band=True)
+                audit_html(arabic, "../../")
             except BuildError as exc:
                 raise BuildError(f"{post.translation.source.name}: {exc}") from exc
             pages[POSTS / post.slug / "ar.html"] = arabic
@@ -1576,7 +1577,7 @@ def build_site() -> int:
     audit_html(home, "", scene=True)
     audit_html(missing, site_path())
     about = render_about()
-    audit_html(about, "../", band=True)
+    audit_html(about, "../")
     reset_dir(POSTS)
     for src, dest in planned:
         dest.parent.mkdir(parents=True, exist_ok=True)

@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { NOISE, SKY_FN, v3 } from "./glsl.js";
 
-export function makeSky(moonDir, moonRad, lite) {
+export function makeSky(moonDir, moonRad) {
   const mat = new THREE.ShaderMaterial({
     uniforms: {
       uTime: { value: 0 },
@@ -18,7 +18,6 @@ export function makeSky(moonDir, moonRad, lite) {
       }`,
     fragmentShader: /* glsl */ `
       precision highp float;
-      ${lite ? "#define LITE" : ""}
       uniform float uTime; uniform float uMoonRad; uniform float uStar;
       varying vec3 vDir;
       ${NOISE}
@@ -46,19 +45,13 @@ export function makeSky(moonDir, moonRad, lite) {
         // a soft band of denser stars crossing the sky
         vec3 bandN = normalize(vec3(0.55, 0.62, 0.56));
         float band = exp(-pow(dot(d, bandN)/0.22, 2.0));
-        #ifndef LITE
         float neb = fbm(d.xz*3.0 + d.y*2.0 + 5.0);
         col += GLOWC * 0.16 * band * smoothstep(0.35, 0.8, neb) * smoothstep(0.05, 0.4, d.y);
-        #endif
 
         float ang = acos(clamp(dot(d, uMoonDir), -1.0, 1.0));
-        #ifdef LITE
-        float st = starLayer(d, 110.0, 0.15 + 0.2*band, 0.07, 0.2);
-        #else
         float st = starLayer(d, 70.0, 0.10 + 0.10*band, 0.05, 0.16)
                  + starLayer(d, 150.0, 0.16 + 0.22*band, 0.07, 0.20)*0.8
                  + starLayer(d, 280.0, 0.12 + 0.30*band, 0.12, 0.26)*0.55;
-        #endif
         st *= smoothstep(0.015, 0.14, d.y) * smoothstep(uMoonRad*1.1, uMoonRad*2.6, ang) * uStar;
         col += mix(LAV, vec3(1.0), 0.55) * st;
 
@@ -68,7 +61,6 @@ export function makeSky(moonDir, moonRad, lite) {
         float md = length(muv);
         float aa = fwidth(md)*1.3;
         float disc = dot(d, uMoonDir) > 0.0 ? 1.0 - smoothstep(1.0 - aa, 1.0 + aa, md) : 0.0;
-        if(disc > 0.0){
         vec3 mc = CREAM;
         float n = fbm(muv*1.55 + vec2(3.1, 0.7));
         float n2 = fbm(muv*3.3 - vec2(1.3, 4.2));
@@ -78,7 +70,6 @@ export function makeSky(moonDir, moonRad, lite) {
         mc *= 1.0 - 0.07*smoothstep(0.72, 0.98, md);
         mc += vec3(0.05, 0.05, 0.04) * (1.0 - smoothstep(0.0, 0.9, length(muv - vec2(-0.28, 0.34))));
         col = mix(col, min(mc, vec3(1.0)), disc);
-        }
 
         // a thin anamorphic streak through the moon
         float du = dot(d, mR), dv = dot(d, mU);

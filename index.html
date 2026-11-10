@@ -21,14 +21,14 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; script-src 'self'; object-src 'none'; frame-src 'none'; connect-src 'none'; manifest-src 'none'; media-src 'none'; worker-src 'none'; require-trusted-types-for 'script'; trusted-types 'none'">
   <meta name="theme-color" content="#0d1120">
   <meta name="color-scheme" content="dark">
-  <link rel="stylesheet" href="assets/voyage.css?v=4a8397ff">
-  <script src="assets/voyage.js?v=cef9b2a8" integrity="sha384-ERkuIYL60zzEX7QqiqdEiOsgbjBxVC/SkKdVx7GlH//ImpaCZ24gchYKyuNWTVbY" defer></script>
+  <link rel="stylesheet" href="assets/voyage.css?v=ff481f42">
+  <script src="assets/voyage.js?v=0bda4686" integrity="sha384-RWa6krmMZyu8HnLV49OoS2hBwC5el+03N2jpMf9PoyLUr59Ou+gVe/0t/GL9HrhH" defer></script>
   <link rel="alternate" type="application/atom+xml" title="Adel Sadek" href="feed.xml">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/favicon.png">
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 </head>
 <body class="page-home">
-  <canvas class="sea" data-scene="home" aria-hidden="true"></canvas>
+  <canvas id="sea" aria-hidden="true"></canvas>
   <div class="veil" aria-hidden="true"></div>
   <header class="bar">
     <a class="mark" href="./" aria-label="Adel Sadek"><img class="avatar" src="assets/avatar.webp" alt="Adel Sadek" width="36" height="36"></a>
@@ -36,16 +36,18 @@
   </header>
   <main class="voyage">
     <section class="hero" aria-labelledby="title">
+      <div class="title">
+        <p class="eyebrow fade">Web · Mobile · Business logic</p>
+        <h1 id="title"><span class="rise"><span>Bug bounty</span></span> <span class="rise d1"><span><em>writeups</em></span></span></h1>
+        <p class="lede fade d1">Real bugs, the requests that found them, and how to fix them.</p>
+      </div>
       <div class="dock">
-        <div class="berth">
-          <h1 class="tagline fade" id="title">Bug bounty writeups</h1>
-          <a class="latest fade d1" href="posts/negative-cart-totals/">
-            <span class="k">Latest writeup · <time datetime="2026-10-30" dir="ltr">2026-10-30</time></span>
-            <span class="t">Negative Cart Totals</span>
-            <span class="n">−€477,673.13</span>
-          </a>
-        </div>
-        <button class="cue fade d2" type="button" id="cue"><i><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Open the chart</button>
+        <a class="latest fade d2" href="posts/negative-cart-totals/">
+          <span class="k">Latest writeup · <time datetime="2026-10-30" dir="ltr">2026-10-30</time></span>
+          <span class="t">Negative Cart Totals</span>
+          <span class="n">−€477,673.13</span>
+        </a>
+        <button class="cue fade d3" type="button" id="cue"><i><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 9l7 7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></i>Open the chart</button>
       </div>
     </section>
     <section class="chart" aria-labelledby="chart-h">
@@ -72,5 +74,8 @@
       <button class="back" type="button" id="back"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 15l7-7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Back to sea</button>
     </section>
   </main>
+  <footer>
+    <nav aria-label="More"><a href="about/">About me</a><a href="https://harbor.adel-sadek.net/" lang="en" dir="ltr">HackHarbor</a><a href="feed.xml">Feed</a></nav>
+  </footer>
 </body>
 </html>
