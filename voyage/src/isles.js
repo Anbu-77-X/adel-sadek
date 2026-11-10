@@ -109,7 +109,7 @@ export function makeIsles(toonMaterial, layout) {
         it.beam.material.uniforms.uA.value = 1 - chart * 0.55;
       }
       if (it.fog) {
-        it.fog.material.opacity = chart * 0.96;
+        it.fog.material.opacity = chart * 0.42;
         it.fog.visible = chart > 0.01;
         it.fog.rotation.z = time * 0.012 * (it.x > 0 ? 1 : -1);
         const s = 1 + 0.03 * Math.sin(time * 0.4 + it.x);

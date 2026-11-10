@@ -11,7 +11,13 @@ THREE.ColorManagement.enabled = false;
 
 const DEG = Math.PI / 180;
 const root = document.documentElement;
-const canvas = document.getElementById("sea");
+const canvas = document.querySelector("canvas[data-scene]");
+// "home" is the full stage; "post" and "about" are a strip of the same sea at the top of a page
+const kind = (canvas && canvas.dataset.scene) || "home";
+const band = kind !== "home";
+const host = band && canvas ? canvas.parentElement : root;
+// phones: fewer pixels, lighter shaders, fewer clouds
+const lite = window.matchMedia("(pointer: coarse)").matches || Math.min(window.screen.width, window.screen.height) < 600;
 const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
@@ -23,34 +29,35 @@ function start() {
   try {
     renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, stencil: false, powerPreference: "high-performance" });
   } catch (err) {
-    root.classList.add("no-gl");
+    host.classList.add("no-gl");
     return;
   }
   if (!renderer.capabilities.isWebGL2 && !renderer.extensions.get("OES_standard_derivatives")) {
-    root.classList.add("no-gl");
+    host.classList.add("no-gl");
     return;
   }
   renderer.outputColorSpace = THREE.LinearSRGBColorSpace;
-  root.classList.add("gl");
+  host.classList.add("gl");
 
-  const state = { p: 0, tp: 0, intro: reduce ? 1 : 0, yaw: 0, pitch: 0, tYaw: 0, tPitch: 0 };
+  const state = { p: 0, tp: 0, lift: 0, intro: reduce ? 1 : 0, yaw: 0, pitch: 0, tYaw: 0, tPitch: 0 };
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(40, 1, 1, 9000);
 
   // the moon: low over the water, straight ahead
   const moonDir = new THREE.Vector3();
   const setMoon = (el) => moonDir.set(0, Math.sin(el), -Math.cos(el));
-  setMoon(9.5 * DEG);
-  const moonRad = 8.2 * DEG;
+  const moonEl = band ? 4.9 : 9.5;
+  setMoon(moonEl * DEG);
+  const moonRad = (band ? 6.2 : 8.2) * DEG;
 
   let px = 1;
-  const sky = makeSky(moonDir, moonRad);
+  const sky = makeSky(moonDir, moonRad, lite);
   const rand = rng(20261030);
-  const sparkles = makeSparkles(26, px, rand);
+  const sparkles = makeSparkles(lite ? 14 : 26, px, rand);
   const shooting = makeShootingStar();
   const birds = makeBirds(7, rand);
-  const clouds = makeClouds(7);
-  const sea = makeSea(moonDir, px);
+  const clouds = makeClouds(7, lite);
+  const sea = makeSea(moonDir, px, lite);
   const toon = makeToonMaterial(moonDir);
   const ship = makeShip(toon);
   scene.add(sky, sparkles, shooting, clouds.group, birds, sea, ship.refl, ship.ship);
@@ -61,21 +68,43 @@ function start() {
   // A spot on the chart stays under fog until the page puts a writeup there.
   const fogged = (key) => { const el = document.querySelector('[data-anchor="' + key + '"]'); return !el || el.classList.contains("fogged"); };
 
+  // The strip at the top of a writeup or the About page: the camera sits low and far back, so the
+  // moon fills the height. Places are set by angle, so they hold at any width.
+  function bandView(aspect) {
+    const fov = aspect > 2.6 ? 21 : aspect > 1.7 ? 25 : 31;
+    const half = Math.atan(Math.tan((fov / 2) * DEG) * aspect) / DEG;
+    const from = (cam, angle, dist) => ({ x: cam[0] + dist * Math.sin(angle * DEG), z: cam[2] - dist * Math.cos(angle * DEG) });
+    let cam, isles;
+    if (kind === "about") {
+      // home port: the light close by on the left, the ship standing off to the right
+      const d = 185;
+      cam = [-d * Math.tan(0.44 * half * DEG), 3.8, d];
+      isles = [{ key: "main", ...from(cam, -0.4 * half, 150), r: 27, h: 11, lighthouse: true }];
+    } else {
+      // under way: the ship crosses the moon, the light far off to the left
+      const d = aspect > 1.7 ? 140 : 104;
+      cam = [d * 0.1, 3.8, d];
+      isles = [{ key: "main", ...from(cam, -Math.min(20, half * 0.62), 370), r: 31, h: 12, lighthouse: true }];
+      if (half > 28) isles.push({ key: "b", ...from(cam, half * 0.7, 430), r: 22, h: 7 });
+    }
+    return { fov, hero: { pos: cam, yaw: 0, pitch: fov * 0.1 }, world: { isles } };
+  }
+
   // Everything that depends on the shape of the window.
   function layout() {
     const w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight;
     const aspect = w / h;
     const portrait = aspect < 0.85;
-    const fov = portrait ? 62 : aspect < 1.25 ? 50 : 40;
+    let fov = portrait ? 62 : aspect < 1.25 ? 50 : 40;
     const tanH = Math.tan((fov / 2) * DEG);
-    const hero = portrait
-      ? { pos: [2.5, 4.4, 106], yaw: 0.4, pitch: 9.6 }
+    let hero = portrait
+      ? { pos: [2.5, 4.4, 106], yaw: 0.4, pitch: 4.6 }
       : aspect < 1.25
         ? { pos: [6, 4.3, 100], yaw: -3, pitch: 6.2 }
         : { pos: [9, 4.2, 96], yaw: -7, pitch: 4.7 };
     const map = portrait ? { cx: 0, cz: -108, halfX: 84, halfZ: 172 } : { cx: 6, cz: -112, halfX: 190, halfZ: 158 };
     const H = Math.max(map.halfZ / tanH, map.halfX / (tanH * aspect));
-    const world = portrait
+    let world = portrait
       ? {
           isles: [
             { key: "main", x: 34, z: -214, r: 27, h: 11, lighthouse: true },
@@ -92,13 +121,14 @@ function start() {
           ],
           route: [[-5, -15], [-34, -86], [22, -160], [82, -206]],
         };
-    const changed = !L || L.portrait !== portrait;
+    if (band) ({ fov, hero, world } = bandView(aspect));
+    const changed = !L || L.portrait !== portrait || band;
     L = { w, h, aspect, portrait, fov, hero, map, H, world };
     camera.fov = fov; camera.aspect = aspect; camera.updateProjectionMatrix();
 
-    const maxPixels = portrait ? 2.6e6 : 3.4e6;
-    px = Math.min(window.devicePixelRatio || 1, 2, Math.sqrt(maxPixels / (w * h)));
-    px = Math.max(1, px) * quality;
+    const maxPixels = lite ? 0.62e6 : portrait ? 2.6e6 : 3.4e6;
+    px = Math.min(window.devicePixelRatio || 1, lite && !band ? 1.5 : 2, Math.sqrt(maxPixels / (w * h)));
+    px = Math.max(lite ? 0.8 : 1, px) * quality;
     renderer.setPixelRatio(px);
     renderer.setSize(w, h, false);
     sea.material.uniforms.uPx.value = px;
@@ -108,12 +138,14 @@ function start() {
       if (isles) scene.remove(isles.group);
       if (route) { scene.remove(route); route.geometry.dispose(); }
       isles = makeIsles(toon, world.isles);
-      route = makeRoute(world.route);
-      scene.add(isles.group, route);
-      world.isles.forEach((it, i) => sea.material.uniforms.uIsles.value[i].set(it.x, it.z, it.r, 0));
+      route = world.route ? makeRoute(world.route) : null;
+      scene.add(isles.group);
+      if (route) scene.add(route);
+      sea.material.uniforms.uIsles.value.forEach((u, i) => { const it = world.isles[i]; if (it) u.set(it.x, it.z, it.r, 0); else u.set(0, 0, 0, 0); });
+      tagKey = "";
     }
   }
-  let quality = 1;
+  let quality = 1, tagKey = "";
   layout();
 
   // --- camera -----------------------------------------------------------------------------
@@ -124,8 +156,8 @@ function start() {
     const { hero, map, H } = L;
     const par = 1 - sstep(0, 0.5, p);
     const yaw = (hero.yaw + state.yaw * par) * DEG;
-    const pitch = (hero.pitch + state.pitch * par - 3.2 * k) * DEG;
-    pos0.set(hero.pos[0] + state.yaw * par * 0.6, hero.pos[1] - 1.7 * k, hero.pos[2] - 16 * k);
+    const pitch = (hero.pitch + state.pitch * par - 3.2 * k - 2.4 * state.lift) * DEG;
+    pos0.set(hero.pos[0] + state.yaw * par * 0.6, hero.pos[1] - 1.7 * k + 8 * state.lift, hero.pos[2] - 16 * k);
     dir0.set(Math.sin(yaw) * Math.cos(pitch), Math.sin(pitch), -Math.cos(yaw) * Math.cos(pitch));
     T0.copy(pos0).addScaledVector(dir0, 500);
     pos1.set(map.cx, H, map.cz + 0.5);
@@ -144,6 +176,10 @@ function start() {
   const v = new THREE.Vector3();
   function placeTags() {
     const show = state.p > 0.6;
+    // the camera only moves with the scroll here, so a still chart costs nothing
+    const key = state.p.toFixed(4) + ":" + L.w + ":" + L.h;
+    if (!tags.length || key === tagKey) return;
+    tagKey = key;
     for (const el of tags) {
       const key = el.dataset.anchor;
       if (key === "ship") v.set(ship.ship.position.x, 0, ship.ship.position.z);
@@ -194,7 +230,9 @@ function start() {
 
   // --- scroll: the sea becomes the chart --------------------------------------------------------
   const scrollLen = () => Math.round((canvas.clientHeight || window.innerHeight) * 1.55);
-  const readScroll = () => { state.tp = clamp(window.scrollY / scrollLen(), 0, 1); };
+  const readScroll = band
+    ? () => { state.lift = clamp(window.scrollY / Math.max(1, canvas.clientHeight), 0, 1); }
+    : () => { state.tp = clamp(window.scrollY / scrollLen(), 0, 1); };
   window.addEventListener("scroll", readScroll, { passive: true });
   readScroll();
 
@@ -212,7 +250,7 @@ function start() {
   }
 
   // --- intro ------------------------------------------------------------------------------------
-  const moon = { el: reduce ? 9.5 : 5.2 };
+  const moon = { el: reduce ? moonEl : moonEl - 4.3 };
   // the headline figure on the chart counts up once: "−€477,673.13" is a prefix, a number and its decimals
   const figure = document.querySelector("[data-count]");
   const parts = figure && /^(\D*)([\d,]+)(?:\.(\d+))?$/.exec(figure.textContent.trim());
@@ -222,19 +260,25 @@ function start() {
   let counted = false;
 
   function intro() {
-    root.classList.add("ready");
+    host.classList.add("ready");
     if (reduce) return;
     // the words rise with CSS alone; here the camera settles and the moon climbs
     gsap.timeline()
       .to(state, { intro: 1, duration: 3.4, ease: "power2.out" }, 0)
-      .to(moon, { el: 9.5, duration: 3.8, ease: "power2.out", onUpdate: () => setMoon(moon.el * DEG) }, 0);
+      .to(moon, { el: moonEl, duration: 3.8, ease: "power2.out", onUpdate: () => setMoon(moon.el * DEG) }, 0);
     scheduleStar(2600);
   }
 
   // --- frame ------------------------------------------------------------------------------------
   let last = performance.now(), paused = false;
   let time = reduce ? 12 : 0, lastP = -1, frames = 0, acc = 0, shown = false;
+  // a strip that has scrolled away stops drawing
+  let onScreen = true;
+  if (band && "IntersectionObserver" in window) {
+    new IntersectionObserver((entries) => { onScreen = entries[0].isIntersecting; last = performance.now(); }).observe(canvas);
+  }
   function frame() {
+    if (!onScreen) return;
     const now = performance.now();
     const dt = Math.min((now - last) / 1000, 0.1);
     last = now;
@@ -269,20 +313,22 @@ function start() {
     clouds.update(time, state.yaw, 1);
     birds.material.uniforms.uTime.value = time;
     birds.material.uniforms.uCenter.value.set(-650 + ((time * 17 + 600) % 1300), 150 + 6 * Math.sin(time * 0.2), -700);
-    birds.visible = p < 0.4;
+    birds.visible = !lite && p < 0.4;
     isles.update(time, chart);
-    route.material.uniforms.uReveal.value = sstep(0.62, 0.98, p) * 1.03;
-    route.material.uniforms.uTime.value = time;
-    route.visible = p > 0.5;
+    if (route) {
+      route.material.uniforms.uReveal.value = sstep(0.62, 0.98, p) * 1.03;
+      route.material.uniforms.uTime.value = time;
+      route.visible = p > 0.5;
+    }
 
     renderer.render(scene, camera);
     placeTags();
 
     if (Math.abs(p - lastP) > 0.0005) {
       lastP = p;
-      root.style.setProperty("--p", p.toFixed(4));
-      root.classList.toggle("at-sea", p < 0.3);
-      root.classList.toggle("at-chart", p > 0.82);
+      host.style.setProperty("--p", p.toFixed(4));
+      host.classList.toggle("at-sea", p < 0.3);
+      host.classList.toggle("at-chart", p > 0.82);
       if (p > 0.8 && !counted) {
         counted = true;
         if (fig && !reduce) { const o = { n: 0 }; gsap.to(o, { n: fig.value, duration: 2.0, ease: "power3.out", onUpdate: () => setFigure(o.n) }); }
@@ -291,10 +337,11 @@ function start() {
     if (!shown) { shown = true; intro(); }
 
     // if the device struggles, trade resolution for smoothness
-    if (state.intro === 1 && quality > 0.62) {
+    const floor = lite ? 0.5 : 0.62;
+    if (state.intro === 1 && quality > floor) {
       acc += dt; frames++;
-      if (frames === 80) {
-        if (acc / frames > 0.03) { quality = Math.max(0.62, quality - 0.19); layout(); }
+      if (frames === 45) {
+        if (acc / frames > (lite ? 0.024 : 0.03)) { quality = Math.max(floor, quality - 0.17); layout(); }
         frames = 0; acc = 0;
       }
     }

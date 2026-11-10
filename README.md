@@ -44,6 +44,8 @@ The home page is a night sea drawn live in the browser: a moon, clouds, a schoon
 - Past three writeups, every writeup is also listed under the chart.
 - The first money amount in a writeup's short line, for example −€477,673.13, is shown as its figure.
 - The words on the page live in `HOME` near the top of `build.py`.
+- The sea carries one small line of words, above the latest writeup.
+- A phone gets a lighter scene: fewer pixels, simpler water and sky, fewer clouds, and solid cards. If frames still run slow, the picture drops resolution by itself.
 - Without WebGL, or with scripts off, the same content shows as a plain page. A reader who asks for reduced motion gets a still scene.
 
 The scene's code is in `voyage/src/`. It is bundled with three.js and GSAP into `assets/voyage.js`, and the page's styles are in `assets/voyage.css`. Adding a writeup does not touch any of this. After changing something in `voyage/src/`, rebuild the bundle (this needs Node.js):
@@ -61,6 +63,8 @@ Commit `assets/voyage.js` together with the source.
 ## What a writeup page gets
 
 Built from the Markdown, with no script on the page:
+
+- A small boat that crosses the top of the page as the writeup scrolls, where the browser supports scroll-driven animation.
 
 - A contents list from the `##` headings, and a `#` link beside each heading.
 - Reading time, the language switch, and links back to the list and to the top.
@@ -88,11 +92,11 @@ On writeups and the About page the night sky moves with CSS alone: stars twinkle
 
 Everything stops for a reader whose device asks for reduced motion, and every page still works with the script off.
 
-The home page loads `assets/voyage.js` instead, and nothing else.
+`assets/voyage.js` draws the sea: the whole home page, and the strip at the top of a writeup and the About page. The strip stops drawing once it scrolls out of view, and the page reads the same without it.
 
 How the scripts are kept safe:
 
-- Each page loads exactly one script from this site (`script-src 'self'`), with a Subresource Integrity hash. A changed file does not run.
+- A page loads only this site's own scripts (`script-src 'self'`): `voyage.js` on the home page, `site.js` and `voyage.js` on a writeup and the About page. Each has a Subresource Integrity hash. A changed file does not run.
 - Trusted Types are required and no policy can be created, so the browser refuses to turn any string into HTML or code, even from inside the scripts.
 - `connect-src 'none'` and `form-action 'none'` mean they cannot send anything anywhere.
 - `build.py` refuses a `site.js` or a file in `voyage/src/` that uses `innerHTML`, `eval`, `fetch` or anything similar, and refuses any page that loads another script or loads its own without the right hash.
