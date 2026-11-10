@@ -34,37 +34,11 @@ It has its own `title:` and `description:` and uses the same Markdown. The build
 
 ## About page
 
-`about/` shows the portrait, a role line and a short bio. The words live in `ABOUT` near the top of `build.py`, and the picture is `assets/portrait.webp` (480×480). Change either, bump `ABOUT_UPDATED`, and run `python3 build.py`. The home page links to it from the "About me" pill in the top bar, beside the HackHarbor pill. The home page and the About page are English only. Each writeup carries its own language switch, at the top right across from "All writeups".
-
-## Home page
-
-The home page is a night sea drawn live in the browser: a moon, clouds, a schooner and a lighthouse. Scrolling lifts the camera until the same sea reads as a chart, and the writeups are its islands.
-
-- The newest writeup gets the island with the light and a full card. The next two get the smaller islands. A spot without a writeup stays under fog, marked "Uncharted".
-- Past three writeups, every writeup is also listed under the chart.
-- The first money amount in a writeup's short line, for example −€477,673.13, is shown as its figure.
-- The words on the page live in `HOME` near the top of `build.py`.
-- The sea carries one small line of words, above the latest writeup.
-- A phone gets a lighter scene: fewer pixels, simpler water and sky, fewer clouds, and solid cards. If frames still run slow, the picture drops resolution by itself.
-- Without WebGL, or with scripts off, the same content shows as a plain page. A reader who asks for reduced motion gets a still scene.
-
-The scene's code is in `voyage/src/`. It is bundled with three.js and GSAP into `assets/voyage.js`, and the page's styles are in `assets/voyage.css`. Adding a writeup does not touch any of this. After changing something in `voyage/src/`, rebuild the bundle (this needs Node.js):
-
-```bash
-cd voyage
-npm ci
-node build.mjs
-cd ..
-python3 build.py
-```
-
-Commit `assets/voyage.js` together with the source.
+`about/` shows the portrait, a role line and a short bio. The words live in `ABOUT` near the top of `build.py`, and the picture is `assets/portrait.webp` (480×480). Change either, bump `ABOUT_UPDATED`, and run `python3 build.py`. The home page links to it from the "About me" pill, beside the HackHarbor pill under the tagline. The home page and the About page are English only. Each writeup carries its own language switch, at the top right across from "All writeups".
 
 ## What a writeup page gets
 
 Built from the Markdown, with no script on the page:
-
-- A small boat that crosses the top of the page as the writeup scrolls, where the browser supports scroll-driven animation.
 
 - A contents list from the `##` headings, and a `#` link beside each heading.
 - Reading time, the language switch, and links back to the list and to the top.
@@ -78,29 +52,27 @@ Pictures in a writeup must be png, jpg, gif, or webp, stored inside `writeups/`,
 
 Every build writes `sitemap.xml`, `robots.txt` and an Atom feed (`feed.xml`). Add the site in Google Search Console and submit `sitemap.xml` once. Pages also carry canonical links, `hreflang` links between the English and Arabic versions, and structured data.
 
-## Motion and the scripts
+## Motion and the one script
 
-On writeups and the About page the night sky moves with CSS alone: stars twinkle, a shooting star crosses now and then, clouds drift at different depths, the moonlight breathes and the moon floats. In a writeup, pictures and code rise into place as they scroll in.
+The night sky moves with CSS alone: stars twinkle, a shooting star crosses now and then, clouds drift at different depths, the moonlight breathes and the moon floats. In a writeup, pictures and code rise into place as they scroll in.
 
 `assets/site.js` adds the rest:
 
 - Copy on every code block, and Copy as cURL on an `http` block that has a `Host:` header.
 - Pinch, drag and tap to zoom in pictures, with arrows to move between them.
 - A tap on a heading's `#` copies the link to that section.
+- On the home page the moon leans toward the pointer, bounces and throws stars when tapped.
 - Cards lean toward the pointer, with a soft light under it.
 - Two easter eggs.
 
 Everything stops for a reader whose device asks for reduced motion, and every page still works with the script off.
 
-`assets/voyage.js` draws the sea: the whole home page, and the strip at the top of a writeup and the About page. The strip stops drawing once it scrolls out of view, and the page reads the same without it.
+How the script is kept safe:
 
-How the scripts are kept safe:
-
-- A page loads only this site's own scripts (`script-src 'self'`): `voyage.js` on the home page, `site.js` and `voyage.js` on a writeup and the About page. Each has a Subresource Integrity hash. A changed file does not run.
-- Trusted Types are required and no policy can be created, so the browser refuses to turn any string into HTML or code, even from inside the scripts.
-- `connect-src 'none'` and `form-action 'none'` mean they cannot send anything anywhere.
-- `build.py` refuses a `site.js` or a file in `voyage/src/` that uses `innerHTML`, `eval`, `fetch` or anything similar, and refuses any page that loads another script or loads its own without the right hash.
-- `voyage.js` also holds two libraries, three.js and GSAP. They are not read line by line. The policy above is what keeps them from reaching the network or writing HTML.
+- It is the only script the Content-Security-Policy allows (`script-src 'self'`), and the page loads it with a Subresource Integrity hash. A changed file does not run.
+- Trusted Types are required and no policy can be created, so the browser refuses to turn any string into HTML or code, even from inside `site.js`.
+- `connect-src 'none'` and `form-action 'none'` mean it cannot send anything anywhere.
+- `build.py` refuses a `site.js` that uses `innerHTML`, `eval`, `fetch` or anything similar, and refuses any page that loads another script or loads this one without the right hash.
 
 GitHub Pages cannot send security headers, so the policy is a `<meta>` tag. Everything above works from there. `frame-ancestors` does not, which does not matter for a static site with no sign-in.
 

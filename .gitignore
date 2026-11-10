@@ -18,4 +18,3 @@ service-account.json
 writeups/drafts/
 .DS_Store
 *.log
-node_modules

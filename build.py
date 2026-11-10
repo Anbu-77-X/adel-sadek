@@ -105,28 +105,7 @@ SKY = (
     '    <span class="shooting-star s2"></span>\n'
     '  </div>\n'
 )
-# The home page is a different stage: a WebGL sea drawn by assets/voyage.js, with its own stylesheet.
-SEA = (
-    '  <canvas class="sea" data-scene="home" aria-hidden="true"></canvas>\n'
-    '  <div class="veil" aria-hidden="true"></div>\n'
-)
-HOME = {
-    "title": "Bug bounty writeups",
-    "latest": "Latest writeup",
-    "open": "Open the chart",
-    "chart_eyebrow": "Writeups",
-    "chart": "Known waters",
-    "read": "Read the writeup",
-    "fog": "Uncharted",
-    "here": "You are here",
-    "back": "Back to sea",
-}
-# Places on the chart, newest writeup first. "main" is the island with the light.
-SEA_SPOTS = ("main", "a", "b")
 SCRIPT = ROOT / "assets" / "site.js"
-# three.js, GSAP and the scene code in voyage/src, bundled by voyage/build.mjs. Home page only.
-VOYAGE = ROOT / "assets" / "voyage.js"
-VOYAGE_DIR = ROOT / "voyage"
 # Ways a script can turn a string into code or HTML, or talk to the network.
 # The site's script must use none of them.
 _RISKY_JS = re.compile(
@@ -142,9 +121,9 @@ def asset_version(name: str = "style.css") -> str:
     return hashlib.sha256(data).hexdigest()[:8]
 
 
-def script_integrity(name: str = "site.js") -> str:
-    """Subresource Integrity: the browser runs a script only if it is exactly this file."""
-    digest = hashlib.sha384((ROOT / "assets" / name).read_bytes()).digest()
+def script_integrity() -> str:
+    """Subresource Integrity: the browser runs site.js only if it is exactly this file."""
+    digest = hashlib.sha384(SCRIPT.read_bytes()).digest()
     return "sha384-" + base64.b64encode(digest).decode("ascii")
 
 
@@ -155,18 +134,11 @@ def check_script() -> None:
     risky = _RISKY_JS.search(text)
     if risky:
         raise BuildError(f"assets/site.js uses something the site does not allow: {risky.group(0)}")
-    if not VOYAGE.is_file() or VOYAGE.is_symlink():
-        raise BuildError("assets/voyage.js is missing. Build it in voyage/ (see the README)")
-    # The bundle holds two libraries, so the lint reads the scene code they are bundled with.
-    for source in sorted((VOYAGE_DIR / "src").glob("*.js")):
-        risky = _RISKY_JS.search(source.read_text(encoding="utf-8"))
-        if risky:
-            raise BuildError(f"voyage/src/{source.name} uses something the site does not allow: {risky.group(0)}")
 
 
-def script_tag(prefix: str, name: str = "site.js") -> str:
-    src = f"{prefix}assets/{name}?v={asset_version(name)}"
-    return f'  <script src="{html.escape(src, quote=True)}" integrity="{script_integrity(name)}" defer></script>\n'
+def script_tag(prefix: str) -> str:
+    src = f"{prefix}assets/site.js?v={asset_version('site.js')}"
+    return f'  <script src="{html.escape(src, quote=True)}" integrity="{script_integrity()}" defer></script>\n'
 
 
 def avatar_img(prefix: str, big: bool, alt: str = AUTHOR) -> str:
@@ -222,7 +194,7 @@ SECRET_NAMES = {
 TEXT_SUFFIXES = {".py", ".md", ".html", ".css", ".txt", ".xml", ".gitignore"}
 # One script, from this site only, checked byte for byte. Trusted Types are required and no
 # policy can be made, so the browser refuses any attempt to turn a string into HTML or code.
-SKIP_DIRS = {".git", "__pycache__", "node_modules"}
+SKIP_DIRS = {".git", "__pycache__"}
 CSP = (
     "default-src 'none'; style-src 'self'; img-src 'self'; "
     "font-src 'self'; base-uri 'none'; form-action 'none'; script-src 'self'; "
@@ -910,22 +882,8 @@ def image_size(path: Path) -> tuple[int, int] | None:
 
 
 def page(title: str, body: str, prefix: str, head_extra: str = "", description: str = "",
-         kind: str = "page-home", lang: str = "en", scene: bool = False, band: str = "") -> str:
-    """One page. A scene page (the home page) swaps the sky, stylesheet and script for the sea's own.
-
-    band puts a strip of that sea at the top of an ordinary page: "post" or "about".
-    """
-    sheet = "voyage.css" if scene else "style.css"
-    css = f"{prefix}assets/{sheet}?v={asset_version(sheet)}"
-    scripts = script_tag(prefix, "voyage.js") if scene else script_tag(prefix)
-    strip = ""
-    if band and not scene:
-        kind += " has-band"
-        scripts += script_tag(prefix, "voyage.js")
-        strip = f'  <div class="sea-band" aria-hidden="true"><canvas data-scene="{html.escape(band, quote=True)}"></canvas></div>\n'
-        if band == "post":
-            strip += '  <div class="voyage-line" aria-hidden="true"><span class="wake"></span><span class="boat"></span></div>\n'
-    inner = SEA + body if scene else f'{SKY}{strip}  <div class="wrap" id="top">\n{body}\n  </div>'
+         kind: str = "page-home", lang: str = "en") -> str:
+    css = f"{prefix}assets/style.css?v={asset_version()}"
     description = description or f"{TAGLINE['en']} By {AUTHOR}."
     feed = f'  <link rel="alternate" type="application/atom+xml" title="{html.escape(AUTHOR)}" href="{prefix}feed.xml">\n'
     return f"""<!DOCTYPE html>
@@ -941,9 +899,11 @@ def page(title: str, body: str, prefix: str, head_extra: str = "", description: 
   <meta name="theme-color" content="{THEME_COLOR}">
   <meta name="color-scheme" content="dark">
   <link rel="stylesheet" href="{html.escape(css, quote=True)}">
-{scripts}{feed}{icon_links(prefix)}</head>
+{script_tag(prefix)}{feed}{icon_links(prefix)}</head>
 <body class="{kind}">
-{inner}
+{SKY}  <div class="wrap" id="top">
+{body}
+  </div>
 </body>
 </html>
 """
@@ -977,122 +937,65 @@ PERSON = (
 )
 
 
-def chart_note(count: int) -> str:
-    if count == 0:
-        return TEXT["en"]["empty"]
-    if count == 1:
-        return "One island charted. The rest is still fog."
-    if count == 2:
-        return "Two islands charted. The rest is still fog."
-    if count == 3:
-        return "Three islands charted."
-    return f"{count} writeups so far. The newest three are on the chart."
+def header_pills(lang: str) -> str:
+    """Two pills under the tagline: the About page, then the video site."""
+    words = TEXT[lang]
+    return (
+        f'      <nav class="header-pills" aria-label="{html.escape(words["links"], quote=True)}">'
+        f'<a href="about/">{PERSON}{html.escape(words["about"])}</a>'
+        f'<a href="{HARBOR_URL}" lang="en" dir="ltr">{HARBOR_SHIP}HackHarbor</a></nav>\n'
+    )
 
 
 def render_index(posts: list[Post], lang: str = "en") -> str:
-    """Home page, English only at the root: a night sea that turns into a chart of the writeups.
-
-    The newest three writeups get an island each. Past three, every writeup is also listed below.
-    """
+    """Home page, English only at the root. Each writeup carries its own language switch."""
     words = TEXT[lang]
-    prefix = ""
-    esc = html.escape
-
-    def figure_of(post: Post) -> str:
-        found = _MONEY.search(summary_of(post))
-        return found.group(0) if found else ""
-
-    def stamp(post: Post) -> str:
-        return f'<time datetime="{esc(post.date)}" dir="ltr">{esc(post.date)}</time>'
-
-    latest = ""
-    if posts:
-        post = posts[0]
-        figure = figure_of(post)
-        latest = (
-            f'          <a class="latest fade d1" href="{esc(post_url(post, post.lang), quote=True)}">\n'
-            f'            <span class="k">{esc(HOME["latest"])} · {stamp(post)}</span>\n'
-            f'            <span class="t">{esc(post.title)}</span>\n'
-            + (f'            <span class="n">{esc(figure)}</span>\n' if figure else "")
-            + "          </a>\n"
-        )
-    isles: list[str] = []
-    for spot, post in zip(SEA_SPOTS, posts):
-        figure = figure_of(post)
-        summary = summary_of(post)
-        small = spot != "main"
-        isles.append(
-            f'        <li class="isle{" small" if small else ""}" data-anchor="{spot}">\n'
-            f'          <a href="{esc(post_url(post, post.lang), quote=True)}">\n'
-            f"            {stamp(post)}\n"
-            f'            <span class="t">{esc(post.title)}</span>\n'
-            + (f'            <span class="n"{"" if small else " data-count"}>{esc(figure)}</span>\n' if figure else "")
-            + (f'            <span class="s">{isolate_money(esc(summary), False)}</span>\n' if summary else "")
-            + f'            <span class="go">{esc(HOME["read"])} →</span>\n'
-            "          </a>\n"
-            "        </li>\n"
-        )
-    fog = "".join(
-        f'      <div class="tag fogged" data-anchor="{spot}" aria-hidden="true"><span>{esc(HOME["fog"])}</span></div>\n'
-        for spot in SEA_SPOTS[max(1, len(posts)):]
-    )
-    log = ""
-    if len(posts) > len(SEA_SPOTS):
-        rows = "".join(
-            f'      <li><a href="{esc(post_url(post, post.lang), quote=True)}">{stamp(post)}'
-            f'<span class="t">{esc(post.title)}</span>'
-            + (f'<span class="s">{isolate_money(esc(summary_of(post)), False)}</span>' if summary_of(post) else "")
-            + "</a></li>\n"
-            for post in posts
-        )
-        log = (
-            '  <section class="log" aria-labelledby="log-h">\n'
-            f'    <h2 id="log-h">{esc(words["all"])}</h2>\n'
-            f"    <ol>\n{rows}    </ol>\n"
-            "  </section>\n"
-        )
-    arrow = (
-        '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="{d}" fill="none" '
-        'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-    )
+    prefix = "" if lang == "en" else "../"
+    years = {post.date[:4] for post in posts}
+    grouped = len(years) > 1
+    if not posts:
+        listing = f'    <p class="empty">{html.escape(words["empty"])}</p>'
+    else:
+        parts: list[str] = []
+        current = ""
+        if not grouped:
+            parts.append('    <ol class="index">')
+        for post in posts:
+            year = post.date[:4]
+            if grouped and year != current:
+                if current:
+                    parts.append("      </ol>\n    </section>")
+                current = year
+                parts.append(
+                    f'    <section class="year-block">\n      <h2 class="year">{html.escape(year)}</h2>\n      <ol class="index">'
+                )
+            shown = post.translation if lang == "ar" and post.translation else post
+            href = prefix + post_url(post, shown.lang)
+            summary = summary_of(shown)
+            text_dir = ' lang="en" dir="ltr"' if shown.lang != lang else ' dir="auto"'
+            summary_html = isolate_money(html.escape(summary), shown.lang == "ar")
+            line = f'          <p class="summary"{text_dir}>{summary_html}</p>\n' if summary else ""
+            badge = (
+                f' <span class="badge">{html.escape(words["english"])}</span>' if shown.lang != lang else ""
+            )
+            parts.append(
+                "        <li>\n"
+                f'          <time datetime="{html.escape(post.date)}" dir="ltr">{html.escape(post.date)}</time>\n'
+                f'          <a{text_dir} href="{html.escape(href, quote=True)}">'
+                f'<span class="title" data-vt="vt-{html.escape(post.slug, quote=True)}">{html.escape(shown.title)}</span>{badge}</a>\n'
+                f"{line}"
+                "        </li>"
+            )
+        parts.append("      </ol>\n    </section>" if grouped else "    </ol>")
+        listing = "\n".join(parts)
+    # The language switch lives inside each writeup, not on the home page.
     body = (
-        '  <header class="bar">\n'
-        f'    <a class="mark" href="./" aria-label="{esc(NAMES[lang], quote=True)}">{avatar_img(prefix, False, NAMES[lang])}</a>\n'
-        f'    <nav class="pills" aria-label="{esc(words["links"], quote=True)}">'
-        f'<a class="pill" href="about/">{PERSON}{esc(words["about"])}</a>'
-        f'<a class="pill" href="{HARBOR_URL}" lang="en" dir="ltr">{HARBOR_SHIP}HackHarbor</a></nav>\n'
-        "  </header>\n"
-        '  <main class="voyage">\n'
-        '    <section class="hero" aria-labelledby="title">\n'
-        '      <div class="dock">\n'
-        '        <div class="berth">\n'
-        f'          <h1 class="tagline fade" id="title">{esc(HOME["title"])}</h1>\n'
-        f"{latest}"
-        "        </div>\n"
-        f'        <button class="cue fade d2" type="button" id="cue"><i>{arrow.format(d="M5 9l7 7 7-7")}</i>{esc(HOME["open"])}</button>\n'
-        "      </div>\n"
-        "    </section>\n"
-        '    <section class="chart" aria-labelledby="chart-h">\n'
-        '      <div class="chart-head">\n'
-        f'        <p class="eyebrow">{esc(HOME["chart_eyebrow"])}</p>\n'
-        f'        <h2 id="chart-h">{esc(HOME["chart"])}</h2>\n'
-        f'        <p class="note">{esc(chart_note(len(posts)))}</p>\n'
-        "      </div>\n"
-        f'      <ol class="isles">\n{"".join(isles)}      </ol>\n'
-        f'      <div class="tag here" data-anchor="ship" aria-hidden="true"><span>{esc(HOME["here"])}</span></div>\n'
-        f"{fog}"
-        '      <svg class="rose" viewBox="0 0 120 120" aria-hidden="true" focusable="false">'
-        '<circle cx="60" cy="60" r="44" fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>'
-        '<circle cx="60" cy="60" r="36" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="1 5.28" opacity="0.8"/>'
-        '<g class="needle"><path d="M60 14 L66 60 L60 66 L54 60 Z" fill="#f6f0cd"/>'
-        '<path d="M60 106 L66 60 L60 54 L54 60 Z" fill="currentColor" opacity="0.55"/>'
-        '<path d="M14 60 L60 55 L66 60 L60 65 Z M106 60 L60 55 L54 60 L60 65 Z" fill="currentColor" opacity="0.3"/></g>'
-        '<text x="60" y="9" text-anchor="middle">N</text></svg>\n'
-        f'      <button class="back" type="button" id="back">{arrow.format(d="M5 15l7-7 7 7")}{esc(HOME["back"])}</button>\n'
-        "    </section>\n"
-        "  </main>\n"
-        f"{log}"
-    ).rstrip("\n")
+        f'    <header>\n      <h1 class="name"><a href="./" aria-label="{html.escape(NAMES[lang], quote=True)}">'
+        f"{avatar_img(prefix, True, NAMES[lang])}</a></h1>\n"
+        f'      <p class="tagline">{html.escape(TAGLINE[lang])}</p>\n'
+        f"{header_pills(lang)}"
+        f"    </header>\n{listing}"
+    )
     base = site_url()
     urls = {"en": base}
     description = HOME_DESCRIPTION[lang]
@@ -1117,8 +1020,7 @@ def render_index(posts: list[Post], lang: str = "en") -> str:
         tags += ld_json({"@context": "https://schema.org", "@graph": [website, blog]})
     else:
         tags += ld_json({"@context": "https://schema.org", **blog})
-    kind = "page-home has-log" if log else "page-home"
-    return page(title, body, prefix, tags, description, kind=kind, lang=lang, scene=True)
+    return page(title, body, prefix, tags, description, lang=lang)
 
 
 def image_kind(data: bytes) -> str | None:
@@ -1305,7 +1207,7 @@ def render_post(post: Post, planned: list[tuple[Path, Path]], newer: Post | None
         f"    <article{article_dir}>\n{article}\n    </article>\n"
         f"{end}"
     )
-    return page(f"{post.title} — {NAMES[lang]}", body, "../../", tags, description, kind="page-post", lang=lang, band="post")
+    return page(f"{post.title} — {NAMES[lang]}", body, "../../", tags, description, kind="page-post", lang=lang)
 
 
 def portrait_src(prefix: str) -> str:
@@ -1356,7 +1258,7 @@ def render_about(lang: str = "en") -> str:
             "url": site_url(),
         },
     })
-    return page(title, body, prefix, tags, description, kind="page-about", lang=lang, band="about")
+    return page(title, body, prefix, tags, description, kind="page-about", lang=lang)
 
 
 def reset_dir(folder: Path) -> None:
@@ -1453,7 +1355,7 @@ _LD_BLOCK = re.compile(r'<script type="application/ld\+json">([^<]*)</script>')
 _SCRIPT_TAG = re.compile(r'<script src="([^"]*)" integrity="([^"]*)" defer></script>')
 
 
-def audit_html(page_html: str, prefix: str, scene: bool = False, band: bool = False) -> None:
+def audit_html(page_html: str, prefix: str) -> None:
     base = site_url()
     for block in _LD_BLOCK.findall(page_html):
         try:
@@ -1474,10 +1376,9 @@ def audit_html(page_html: str, prefix: str, scene: bool = False, band: bool = Fa
 
         walk(data)
     scripts = _SCRIPT_TAG.findall(page_html)
-    names = ["voyage.js"] if scene else ["site.js", "voyage.js"] if band else ["site.js"]
-    expected = [(f"{prefix}assets/{name}?v={asset_version(name)}", script_integrity(name)) for name in names]
-    if scripts != expected:
-        raise BuildError("the page must load exactly the site's own scripts, with their integrity hashes")
+    expected = f"{prefix}assets/site.js?v={asset_version('site.js')}"
+    if scripts != [(expected, script_integrity())]:
+        raise BuildError("the page must load exactly the site's own script, with its integrity hash")
     rest = _SCRIPT_TAG.sub("", _LD_BLOCK.sub("", page_html))
     if re.search(r"<\s*(script|iframe|object|embed|form|base|style)\b", rest, re.I):
         raise BuildError("refusing to write a page with an active tag")
@@ -1489,7 +1390,7 @@ def audit_html(page_html: str, prefix: str, scene: bool = False, band: bool = Fa
         raise BuildError("refusing to write a page with an active URL")
     if re.search(r"(?i)(?:href|src)\s*=\s*[\"']\s*//", rest):
         raise BuildError("refusing a protocol-relative URL")
-    css = re.escape(prefix + "assets/" + ("voyage.css" if scene else "style.css")) + r"\?v=[0-9a-f]{8}"
+    css = re.escape(prefix + "assets/style.css") + r"\?v=[0-9a-f]{8}"
     if not re.search(f'href="{css}"', rest):
         raise BuildError("page is missing its stylesheet")
     if rest.count('http-equiv="Content-Security-Policy"') != 1 or CSP not in rest:
@@ -1561,22 +1462,22 @@ def build_site() -> int:
         newer = posts[position - 1] if position > 0 else None
         older = posts[position + 1] if position + 1 < len(posts) else None
         english = render_post(post, planned, newer, older)
-        audit_html(english, "../../", band=True)
+        audit_html(english, "../../")
         pages[POSTS / post.slug / "index.html"] = english
         if post.translation:
             post.translation.translation = post
             arabic = render_post(post.translation, planned, newer, older)
             try:
-                audit_html(arabic, "../../", band=True)
+                audit_html(arabic, "../../")
             except BuildError as exc:
                 raise BuildError(f"{post.translation.source.name}: {exc}") from exc
             pages[POSTS / post.slug / "ar.html"] = arabic
     home = render_index(posts)
     missing = render_missing()
-    audit_html(home, "", scene=True)
+    audit_html(home, "")
     audit_html(missing, site_path())
     about = render_about()
-    audit_html(about, "../", band=True)
+    audit_html(about, "../")
     reset_dir(POSTS)
     for src, dest in planned:
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -1631,9 +1532,7 @@ def create_new(title: str) -> None:
 
 def allowed_text(path: Path) -> bool:
     if path.suffix.lower() == ".js":
-        return path.resolve() in {SCRIPT.resolve(), VOYAGE.resolve()} or is_inside(path, VOYAGE_DIR / "src")
-    if path.parent.resolve() == VOYAGE_DIR.resolve() and path.name in {"package.json", "package-lock.json", "build.mjs"}:
-        return True
+        return path.resolve() == SCRIPT.resolve()
     return path.name in {".gitignore", ".nojekyll", "CNAME", "domain.txt"} or path.suffix.lower() in TEXT_SUFFIXES
 
 
@@ -1733,14 +1632,6 @@ def self_check() -> None:
     expect("<" not in ld_json({"a": "</script><x>"}).split(">", 1)[1].rsplit("<", 1)[0], "structured data escaping")
     good = page("t", "<p>x</p>", "")
     audit_html(good, "")
-    sea = page("t", "<p>x</p>", "", scene=True)
-    audit_html(sea, "", scene=True)
-    refused = False
-    try:
-        audit_html(sea, "")
-    except BuildError:
-        refused = True
-    expect(refused, "audit refuses the sea's script on an ordinary page")
     for bad in ('<a onclick="x">', '<p style="x">', "<style>", '<a href=" javascript:x">',
                 "<script>x</script>", '<img src="https://evil.example/x.png">', '<a href="//evil.example">',
                 '<script src="assets/site.js?v=00000000" integrity="sha384-x" defer></script>',
