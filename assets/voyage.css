@@ -290,31 +290,3 @@ html:not(.gl) .has-log .chart { display: none; }
     navigation: none;
   }
 }
-
-/* Page turn: moving between pages swings the old page away in 3D and the new
-   one in from the other side. Browsers without view transitions simply load
-   the page; reduced-motion visitors get no swing. Transform and opacity only,
-   so phones animate it on the GPU. */
-@view-transition { navigation: auto; }
-::view-transition { background: radial-gradient(60% 45% at 50% 28%, #1d2a5c, #101b3b 72%); }
-::view-transition-group(root) { animation-duration: 0.74s; }
-::view-transition-image-pair(root) { isolation: auto; }
-::view-transition-old(root),
-::view-transition-new(root) { mix-blend-mode: normal; backface-visibility: hidden; }
-::view-transition-old(root) {
-  transform-origin: 0% 50%;
-  animation: page-out 0.42s cubic-bezier(0.55, 0, 0.85, 0.35) both;
-}
-::view-transition-new(root) {
-  transform-origin: 100% 50%;
-  animation: page-in 0.6s 0.14s cubic-bezier(0.15, 0.75, 0.25, 1) both;
-}
-@keyframes page-out {
-  to { transform: perspective(1600px) translateZ(-240px) rotateY(34deg); opacity: 0; }
-}
-@keyframes page-in {
-  from { transform: perspective(1600px) translateZ(-240px) rotateY(-34deg); opacity: 0; }
-}
-@media (prefers-reduced-motion: reduce) {
-  @view-transition { navigation: none; }
-}
